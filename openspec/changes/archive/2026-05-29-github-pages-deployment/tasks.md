@@ -17,16 +17,16 @@
 
 ## 4. Commit and Push
 
-- [ ] 4.1 Stage `vite.config.ts`, `package-lock.json`, and `.github/workflows/deploy.yml`
-- [ ] 4.2 Commit with message `Configure GitHub Pages deployment`
-- [ ] 4.3 Push to `main`
+- [X] 4.1 Stage `vite.config.ts`, `package-lock.json`, and `.github/workflows/deploy.yml`
+- [X] 4.2 Commit with message `Configure GitHub Pages deployment`
+- [X] 4.3 Push to `main`
 
 ## 5. GitHub Repository Settings
 
-- [ ] 5.1 Navigate to `Repository → Settings → Pages`
-- [ ] 5.2 Set `Build and deployment → Source` to **GitHub Actions**
+- [X] 5.1 Navigate to `Repository → Settings → Pages`
+- [X] 5.2 Set `Build and deployment → Source` to **GitHub Actions**
 
 ## 6. Verify Deployment
 
-- [ ] 6.1 Navigate to `Repository → Actions` and confirm the `Deploy Vite app to GitHub Pages` workflow is running/passed
-- [ ] 6.2 Open `https://cedricmenec.github.io/my-prompt-manager/` and verify the app loads correctly with no console 404 errors
+- [x] 6.1 Navigate to `Repository → Actions` and confirm the `Deploy Vite app to GitHub Pages` workflow is running/passed
+- [x] 6.2 Open `https://cedricmenec.github.io/my-prompt-manager/` and verify the app loads correctly with no console 404 errors
