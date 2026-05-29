@@ -1,18 +1,15 @@
-import { useState } from 'react'
 import { usePrompts } from '@/features/prompts/PromptsContext'
-
-type NavItem = string
+import type { PromptFilter } from '@/features/prompts/PromptsContext'
 
 export function SidebarNav() {
-  const { state, dispatch } = usePrompts()
-  const [activeNav, setActiveNav] = useState<NavItem>('all-prompts')
+  const { state, dispatch, activeFilter, setActiveFilter } = usePrompts()
 
-  // 2.5 Compute uncollected count (prompts with no tags)
+  // Compute uncollected count (prompts with no tags)
   const uncollectedCount = state.prompts.filter(
     (p) => !p.tags || p.tags.length === 0,
   ).length
 
-  // 2.7 Derive collections from prompt tags (group by tag, count per tag)
+  // Derive collections from prompt tags (group by tag, count per tag)
   const collectionsMap = new Map<string, number>()
   for (const prompt of state.prompts) {
     for (const tag of prompt.tags ?? []) {
@@ -23,11 +20,22 @@ export function SidebarNav() {
     a.localeCompare(b),
   )
 
-  // 2.9 Active state styling
-  const navLinkClass = (id: NavItem) =>
+  // Determine whether a nav item is currently active
+  function isActive(id: string): boolean {
+    if (id === 'all-prompts') return activeFilter.type === 'all'
+    if (id === 'favorites') return activeFilter.type === 'favorites'
+    if (id === 'uncollected') return activeFilter.type === 'uncollected'
+    if (id.startsWith('col:')) {
+      const tag = id.slice(4)
+      return activeFilter.type === 'tag' && (activeFilter as Extract<PromptFilter, { type: 'tag' }>).value === tag
+    }
+    return false
+  }
+
+  const navLinkClass = (id: string) =>
     [
       'flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors',
-      activeNav === id
+      isActive(id)
         ? 'bg-primary-bg text-primary font-medium'
         : 'text-text hover:bg-surface-muted',
     ].join(' ')
@@ -70,7 +78,7 @@ export function SidebarNav() {
 
       {/* 2.4 Primary nav links */}
       <nav className="flex flex-col gap-0.5 px-3" aria-label="Primary navigation">
-        <button className={navLinkClass('all-prompts')} onClick={() => setActiveNav('all-prompts')}>
+        <button className={navLinkClass('all-prompts')} onClick={() => setActiveFilter({ type: 'all' })}>
           <svg
             className="size-4 shrink-0"
             viewBox="0 0 24 24"
@@ -84,7 +92,7 @@ export function SidebarNav() {
           All Prompts
         </button>
 
-        <button className={navLinkClass('favorites')} onClick={() => setActiveNav('favorites')}>
+        <button className={navLinkClass('favorites')} onClick={() => setActiveFilter({ type: 'favorites' })}>
           <svg
             className="size-4 shrink-0"
             viewBox="0 0 24 24"
@@ -102,10 +110,10 @@ export function SidebarNav() {
           Favorites
         </button>
 
-        {/* 2.5 Uncollected with badge */}
+        {/* Uncollected with badge */}
         <button
           className={navLinkClass('uncollected')}
-          onClick={() => setActiveNav('uncollected')}
+          onClick={() => setActiveFilter({ type: 'uncollected' })}
         >
           <svg
             className="size-4 shrink-0"
@@ -161,7 +169,7 @@ export function SidebarNav() {
             <button
               key={tag}
               className={navLinkClass(`col:${tag}`)}
-              onClick={() => setActiveNav(`col:${tag}`)}
+              onClick={() => setActiveFilter({ type: 'tag', value: tag })}
             >
               <svg
                 className="size-4 shrink-0"

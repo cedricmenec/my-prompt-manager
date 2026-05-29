@@ -12,6 +12,16 @@ import type { Prompt } from '@/domain/promptSchema'
 import { promptRepository } from '@/infrastructure/promptRepository'
 
 // ---------------------------------------------------------------------------
+// Filter type
+// ---------------------------------------------------------------------------
+
+export type PromptFilter =
+  | { type: 'all' }
+  | { type: 'favorites' }
+  | { type: 'uncollected' }
+  | { type: 'tag'; value: string }
+
+// ---------------------------------------------------------------------------
 // State & Actions
 // ---------------------------------------------------------------------------
 
@@ -91,6 +101,8 @@ interface PromptsContextValue {
   dispatch: React.Dispatch<Action>
   searchQuery: string
   setSearchQuery: (query: string) => void
+  activeFilter: PromptFilter
+  setActiveFilter: (filter: PromptFilter) => void
   filteredPrompts: Prompt[]
   viewMode: 'grid' | 'list'
   setViewMode: (mode: 'grid' | 'list') => void
@@ -105,6 +117,7 @@ const PromptsContext = createContext<PromptsContextValue | null>(null)
 export function PromptsProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(promptsReducer, initialState)
   const [searchQuery, setSearchQuery] = useState('')
+  const [activeFilter, setActiveFilter] = useState<PromptFilter>({ type: 'all' })
   const [viewMode, setViewMode] = useState<'grid' | 'list'>(
     () => (localStorage.getItem('promptViewMode') as 'grid' | 'list') ?? 'grid',
   )
@@ -120,26 +133,33 @@ export function PromptsProvider({ children }: { children: ReactNode }) {
       .catch(console.error)
   }, [])
 
-  const fuse = useMemo(
-    () =>
-      new Fuse(state.prompts, {
-        keys: [
-          { name: 'title', weight: 2 },
-          { name: 'description', weight: 1 },
-        ],
-        threshold: 0.4,
-        ignoreLocation: true,
-      }),
-    [state.prompts],
-  )
-
   const filteredPrompts = useMemo(() => {
-    if (searchQuery.length <= 2) return state.prompts
+    // Step 1: apply category filter
+    let base = state.prompts
+    if (activeFilter.type === 'favorites') {
+      base = base.filter((p) => p.isFavorite)
+    } else if (activeFilter.type === 'uncollected') {
+      base = base.filter((p) => !p.tags || p.tags.length === 0)
+    } else if (activeFilter.type === 'tag') {
+      const tag = activeFilter.value
+      base = base.filter((p) => p.tags?.includes(tag))
+    }
+
+    // Step 2: apply search query within the filtered base
+    if (searchQuery.length <= 2) return base
+    const fuse = new Fuse(base, {
+      keys: [
+        { name: 'title', weight: 2 },
+        { name: 'description', weight: 1 },
+      ],
+      threshold: 0.4,
+      ignoreLocation: true,
+    })
     return fuse.search(searchQuery).map((r) => r.item)
-  }, [searchQuery, fuse, state.prompts])
+  }, [searchQuery, state.prompts, activeFilter])
 
   return (
-    <PromptsContext.Provider value={{ state, dispatch, searchQuery, setSearchQuery, filteredPrompts, viewMode, setViewMode }}>
+    <PromptsContext.Provider value={{ state, dispatch, searchQuery, setSearchQuery, activeFilter, setActiveFilter, filteredPrompts, viewMode, setViewMode }}>
       {children}
     </PromptsContext.Provider>
   )

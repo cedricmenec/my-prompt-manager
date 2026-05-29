@@ -23,6 +23,10 @@ The system SHALL provide an editor form (rendered in a modal or a dedicated pane
 - **WHEN** the user types `react, typescript` and presses Enter or Tab
 - **THEN** two tag chips (`react`, `typescript`) are added to the tags field
 
+#### Scenario: Removing a tag
+- **WHEN** the user clicks the remove icon on a tag badge in the editor
+- **THEN** the tag is removed from the prompt's tags array
+
 ---
 
 ### Requirement: Create mode saves a new prompt

@@ -20,7 +20,7 @@ The system SHALL render a fixed-position left sidebar of exactly 260px width tha
 ---
 
 ### Requirement: Sidebar primary navigation links
-The sidebar SHALL display three primary navigation links: "All Prompts", "Favorites", and "Uncollected". Each link SHALL show an icon and a label. The active link SHALL receive a distinct visual active state (highlighted background or accent colour). "Uncollected" SHALL show a count badge of prompts that have no tags.
+The sidebar SHALL display three primary navigation links: "All Prompts", "Favorites", and "Uncollected". Each link SHALL show an icon and a label. The active link SHALL receive a distinct visual active state (highlighted background or accent colour). "Uncollected" SHALL show a count badge of prompts that have no tags. Clicking a link SHALL update the `activeFilter` in `PromptsContext` to filter the prompt list accordingly.
 
 #### Scenario: Navigation links are rendered
 - **WHEN** the sidebar is rendered
@@ -34,10 +34,18 @@ The sidebar SHALL display three primary navigation links: "All Prompts", "Favori
 - **WHEN** a navigation link is the current active view
 - **THEN** it renders with a highlighted background or accent colour different from inactive links
 
+#### Scenario: Clicking "Favorites" filters the list
+- **WHEN** the user clicks "Favorites"
+- **THEN** the prompt list shows only prompts where `isFavorite` is `true`
+
+#### Scenario: Clicking "Uncollected" filters the list
+- **WHEN** the user clicks "Uncollected"
+- **THEN** the prompt list shows only prompts with no tags
+
 ---
 
 ### Requirement: Sidebar Collections section
-The sidebar SHALL display a "Collections" section below the primary navigation. Collections SHALL be derived at runtime by grouping all prompt tags. Each collection item SHALL show the tag name and the count of prompts that carry that tag. A "New Collection" icon button SHALL be present in the section header (action deferred; button is rendered but non-functional in this change).
+The sidebar SHALL display a "Collections" section below the primary navigation. Collections SHALL be derived at runtime by grouping all prompt tags. Each collection item SHALL show the tag name and the count of prompts that carry that tag. A "New Collection" icon button SHALL be present in the section header (action deferred; button is rendered but non-functional in this change). Clicking a collection SHALL update the `activeFilter` in `PromptsContext` to filter by that specific tag.
 
 #### Scenario: Collections are derived from prompt tags
 - **WHEN** prompts exist with tags "ai" (3 prompts) and "dev" (5 prompts)
@@ -50,6 +58,10 @@ The sidebar SHALL display a "Collections" section below the primary navigation. 
 #### Scenario: Clicking a collection sets it as active
 - **WHEN** the user clicks a collection item
 - **THEN** the item receives a visual active state
+
+#### Scenario: Clicking a collection tag filters the list
+- **WHEN** the user clicks a collection named "Work"
+- **THEN** only prompts containing the "Work" tag are displayed in the list
 
 ---
 

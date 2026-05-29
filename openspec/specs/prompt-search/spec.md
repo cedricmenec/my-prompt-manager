@@ -38,3 +38,13 @@ The fuzzy matching SHALL be applied to both the `title` and `description` fields
 - **WHEN** the user types "TEMPLATE" or "template" or "Template"
 - **THEN** the same prompts are returned regardless of case
 
+---
+
+### Requirement: Search combined with active filter
+The system SHALL ensure that search queries are applied *after* the active category filter (All, Favorites, Uncollected, or Collection).
+
+#### Scenario: Searching within a collection
+- **WHEN** the "Work" collection is active
+- **AND** the user searches for "Email"
+- **THEN** only prompts in the "Work" collection that match "Email" are shown
+

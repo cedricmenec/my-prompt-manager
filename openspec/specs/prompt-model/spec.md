@@ -13,6 +13,7 @@ The system SHALL define a `Prompt` TypeScript type inferred from a Zod schema as
 - `content`: string — required (the Markdown body, excluding frontmatter)
 - `description`: string — optional
 - `tags`: array of strings — optional, defaults to `[]`
+- `isFavorite`: boolean — optional, defaults to `false`
 - `model`: string — optional (AI model hint, e.g. `gpt-4o`)
 - `temperature`: number — optional, between 0 and 2 inclusive
 - `createdAt`: ISO 8601 date string — required
@@ -29,6 +30,10 @@ The system SHALL define a `Prompt` TypeScript type inferred from a Zod schema as
 #### Scenario: Invalid temperature value fails validation
 - **WHEN** an object with `temperature: 3` is parsed
 - **THEN** `schema.safeParse()` returns `success: false` with a ZodError on `temperature`
+
+#### Scenario: Newly created prompt is not a favorite by default
+- **WHEN** a prompt is created without specifying `isFavorite`
+- **THEN** it has `isFavorite: false`
 
 ---
 

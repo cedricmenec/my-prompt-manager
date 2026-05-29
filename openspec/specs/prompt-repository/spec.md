@@ -7,9 +7,10 @@ Defines the IndexedDB-backed persistence layer for prompts: database initialisat
 ## Requirements
 
 ### Requirement: IndexedDB database initialisation
-The system SHALL open (or create) an IndexedDB database named `byo-prompt-manager` at version `1` using the `idb` library. The database SHALL contain a single object store named `prompts` with `id` as the key path and two indexes:
+The system SHALL open (or create) an IndexedDB database named `byo-prompt-manager` at version `2` using the `idb` library. The database SHALL contain a single object store named `prompts` with `id` as the key path and indexes:
 - `by-updatedAt` on the `updatedAt` field
 - `by-tags` on the `tags` field with `multiEntry: true`
+- `by-favorite` on the `isFavorite` field
 
 #### Scenario: First-time initialisation creates the store
 - **WHEN** the app is opened in a browser with no existing IndexedDB data
@@ -74,6 +75,10 @@ The system SHALL provide a `promptRepository.update(id: string, data: Partial<Om
 #### Scenario: Updating non-existent prompt throws
 - **WHEN** `update` is called with an unknown id
 - **THEN** it rejects with `PromptNotFoundError`
+
+#### Scenario: Updating favorite status is persisted
+- **WHEN** `update` is called with `isFavorite: true`
+- **THEN** `getById` returns the prompt with `isFavorite: true`
 
 ---
 
