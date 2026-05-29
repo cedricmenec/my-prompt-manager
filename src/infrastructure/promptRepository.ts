@@ -21,11 +21,12 @@ export const promptRepository = {
   },
 
   async create(
-    data: Omit<Prompt, 'id' | 'createdAt' | 'updatedAt'>,
+    data: Omit<Prompt, 'id' | 'createdAt' | 'updatedAt' | 'isFavorite'> & { isFavorite?: boolean },
   ): Promise<Prompt> {
     const db = await getDb()
     const now = new Date().toISOString()
     const prompt: Prompt = {
+      isFavorite: false, // Default value
       ...data,
       tags: data.tags ?? [],
       id: crypto.randomUUID(),

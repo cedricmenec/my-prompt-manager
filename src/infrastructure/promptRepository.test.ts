@@ -96,6 +96,7 @@ describe('promptRepository.bulkImport', () => {
       title: `Prompt ${i}`,
       content: `Content ${i}`,
       tags: [] as string[],
+      isFavorite: false,
       createdAt: now,
       updatedAt: now,
     }))

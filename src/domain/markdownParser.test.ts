@@ -7,6 +7,7 @@ const validPrompt: Prompt = {
   title: 'My Prompt',
   content: 'Write a story about a robot.',
   tags: [],
+  isFavorite: false,
   createdAt: '2026-01-01T00:00:00.000Z',
   updatedAt: '2026-01-01T00:00:00.000Z',
 }
