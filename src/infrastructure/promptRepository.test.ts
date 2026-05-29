@@ -108,3 +108,17 @@ describe('promptRepository.bulkImport', () => {
     }
   })
 })
+
+describe('promptRepository.deleteAll', () => {
+  it('removes all prompts from the store', async () => {
+    await promptRepository.create(baseData)
+    await promptRepository.create({ ...baseData, title: 'Second' })
+    await promptRepository.deleteAll()
+    const all = await promptRepository.getAll()
+    expect(all).toEqual([])
+  })
+
+  it('is a no-op on an empty store', async () => {
+    await expect(promptRepository.deleteAll()).resolves.toBeUndefined()
+  })
+})

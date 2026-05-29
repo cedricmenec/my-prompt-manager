@@ -98,6 +98,19 @@ The system SHALL provide a `promptRepository.delete(id: string): Promise<void>` 
 ### Requirement: bulkImport prompts
 The system SHALL provide a `promptRepository.bulkImport(prompts: Prompt[]): Promise<void>` method that writes all given prompts in a single IndexedDB transaction, using `put` semantics (overwrite on id conflict).
 
+---
+
+### Requirement: deleteAll prompts
+The system SHALL provide a `promptRepository.deleteAll(): Promise<void>` method that removes all prompts from the `prompts` object store in a single IndexedDB transaction.
+
+#### Scenario: All prompts are removed after deleteAll
+- **WHEN** `deleteAll` is called on a store containing prompts
+- **THEN** `getAll` returns `[]` immediately after
+
+#### Scenario: deleteAll on empty store is a no-op
+- **WHEN** `deleteAll` is called on an empty store
+- **THEN** the promise resolves without throwing
+
 #### Scenario: All prompts are stored after bulk import
 - **WHEN** `bulkImport` is called with 5 valid prompts
 - **THEN** `getAll` returns at least those 5 prompts

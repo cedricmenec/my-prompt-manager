@@ -65,4 +65,9 @@ export const promptRepository = {
     const tx = db.transaction('prompts', 'readwrite')
     await Promise.all([...prompts.map((p) => tx.store.put(p)), tx.done])
   },
+
+  async deleteAll(): Promise<void> {
+    const db = await getDb()
+    await db.clear('prompts')
+  },
 }
