@@ -23,6 +23,7 @@ export function PromptEditor() {
   const [tags, setTags] = useState<string[]>(existing?.tags ?? [])
   const [tagInput, setTagInput] = useState('')
   const [model, setModel] = useState(existing?.model ?? '')
+  const [notes, setNotes] = useState(existing?.notes ?? '')
   const [temperature, setTemperature] = useState<string>(
     existing?.temperature !== undefined ? String(existing.temperature) : '',
   )
@@ -78,6 +79,7 @@ export function PromptEditor() {
           content: content.trim(),
           description: description.trim() || undefined,
           tags,
+          notes: notes.trim() || undefined,
           model: model.trim() || undefined,
           temperature: tempValue,
         })
@@ -88,6 +90,7 @@ export function PromptEditor() {
           content: content.trim(),
           description: description.trim() || undefined,
           tags,
+          notes: notes.trim() || undefined,
           model: model.trim() || undefined,
           temperature: tempValue,
         })
@@ -195,6 +198,18 @@ export function PromptEditor() {
                   className="flex-1 min-w-[120px] bg-transparent text-sm text-text-heading focus:outline-none"
                 />
               </div>
+            </div>
+
+            {/* Notes */}
+            <div>
+              <label className="block text-sm font-medium text-text-heading mb-1">Notes</label>
+              <textarea
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                rows={3}
+                className="w-full rounded-md border border-border bg-surface px-3 py-1.5 text-sm text-text-heading focus:border-primary focus:outline-none resize-y"
+                placeholder="Usage tips, origin, context… (optional)"
+              />
             </div>
 
             {/* Model + Temperature */}

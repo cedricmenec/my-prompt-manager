@@ -37,6 +37,7 @@ type Action =
   | { type: 'UPDATE'; prompt: Prompt }
   | { type: 'REMOVE'; id: string }
   | { type: 'SELECT'; id: string | null }
+  | { type: 'DESELECT' }
   | { type: 'OPEN_CREATE' }
   | { type: 'OPEN_EDIT' }
   | { type: 'CLOSE_EDITOR' }
@@ -77,6 +78,9 @@ function promptsReducer(state: PromptsState, action: Action): PromptsState {
 
     case 'SELECT':
       return { ...state, selectedPromptId: action.id }
+
+    case 'DESELECT':
+      return { ...state, selectedPromptId: null }
 
     case 'OPEN_CREATE':
       return { ...state, editorMode: 'create' }

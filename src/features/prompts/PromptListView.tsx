@@ -43,17 +43,19 @@ export function PromptListView() {
 
       {/* List view */}
       {hasResults && viewMode === 'list' && (
-        <ul className="flex flex-col gap-1.5">
-          {sorted.map((prompt) => (
-            <li key={prompt.id}>
-              <PromptRow
-                prompt={prompt}
-                isSelected={state.selectedPromptId === prompt.id}
-                onClick={() => dispatch({ type: 'SELECT', id: prompt.id })}
-              />
-            </li>
-          ))}
-        </ul>
+        <div className="max-w-3xl mx-auto">
+          <ul className="flex flex-col gap-1.5">
+            {sorted.map((prompt) => (
+              <li key={prompt.id}>
+                <PromptRow
+                  prompt={prompt}
+                  isSelected={state.selectedPromptId === prompt.id}
+                  onClick={() => dispatch({ type: 'SELECT', id: prompt.id })}
+                />
+              </li>
+            ))}
+          </ul>
+        </div>
       )}
     </div>
   )

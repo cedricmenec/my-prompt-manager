@@ -81,4 +81,15 @@ describe('serializeMarkdown', () => {
     expect(parsed.error).toBeNull()
     expect(parsed.data).toEqual(validPrompt)
   })
+
+  it('roundtrips a prompt with multi-line notes', () => {
+    const withNotes: Prompt = {
+      ...validPrompt,
+      notes: 'Line one.\nLine two.\nLine three.',
+    }
+    const serialized = serializeMarkdown(withNotes)
+    const parsed = parseMarkdown(serialized)
+    expect(parsed.error).toBeNull()
+    expect(parsed.data?.notes).toBe('Line one.\nLine two.\nLine three.')
+  })
 })

@@ -5,7 +5,7 @@
 Defines the main dashboard grid of prompt cards: rendering, sorting, selection, and empty state.
 ## Requirements
 ### Requirement: Prompt list renders all stored prompts
-The system SHALL render prompts in the main content canvas in either grid or list layout depending on the active view mode. In grid mode, the layout SHALL use 1 column on small screens, 2 columns on medium screens, and 3 columns on large screens. In list mode, prompts SHALL be rendered as full-width rows. Both layouts SHALL be sorted by `updatedAt` descending. The displayed set SHALL reflect any active search filter.
+The system SHALL render prompts in the main content canvas in either grid or list layout depending on the active view mode. In grid mode, the layout SHALL use 1 column on small screens, 2 columns on medium screens, and 3 columns on large screens. In list mode, prompts SHALL be rendered as rows constrained to a maximum width of `48rem` (`max-w-3xl`) and centred horizontally. Both layouts SHALL be sorted by `updatedAt` descending. The displayed set SHALL reflect any active search filter.
 
 #### Scenario: List shows all stored prompts in grid mode
 - **WHEN** the app loads in grid mode and prompts exist in the repository
@@ -26,6 +26,10 @@ The system SHALL render prompts in the main content canvas in either grid or lis
 #### Scenario: Grid is responsive
 - **WHEN** the viewport is wide (≥1024px) and grid mode is active
 - **THEN** the grid shows 3 columns of cards
+
+#### Scenario: List rows do not stretch beyond max width on wide screens
+- **WHEN** the viewport is wider than 48rem and list mode is active
+- **THEN** the list container is no wider than 48rem and is centred in the available space
 
 ---
 

@@ -14,6 +14,7 @@ The system SHALL define a `Prompt` TypeScript type inferred from a Zod schema as
 - `description`: string — optional
 - `tags`: array of strings — optional, defaults to `[]`
 - `isFavorite`: boolean — optional, defaults to `false`
+- `notes`: string — optional (free-text author notes; not part of the prompt body)
 - `model`: string — optional (AI model hint, e.g. `gpt-4o`)
 - `temperature`: number — optional, between 0 and 2 inclusive
 - `createdAt`: ISO 8601 date string — required
@@ -34,6 +35,10 @@ The system SHALL define a `Prompt` TypeScript type inferred from a Zod schema as
 #### Scenario: Newly created prompt is not a favorite by default
 - **WHEN** a prompt is created without specifying `isFavorite`
 - **THEN** it has `isFavorite: false`
+
+#### Scenario: Prompt without notes field is valid
+- **WHEN** a prompt object without a `notes` field is parsed
+- **THEN** `schema.parse()` succeeds and `notes` is `undefined` on the result
 
 ---
 

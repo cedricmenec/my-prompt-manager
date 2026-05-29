@@ -90,6 +90,14 @@ export function PromptDetailPanel() {
           </div>
           <div className="ml-4 flex gap-2 shrink-0">
             <button
+              onClick={() => dispatch({ type: 'DESELECT' })}
+              aria-label="Close detail panel"
+              className="inline-flex items-center justify-center rounded-md px-2 py-1.5 text-sm transition-colors border border-border hover:bg-surface-muted"
+              title="Close"
+            >
+              ×
+            </button>
+            <button
               onClick={handleToggleFavorite}
               aria-label={prompt.isFavorite ? 'Remove from favorites' : 'Add to favorites'}
               className="inline-flex items-center justify-center rounded-md px-2 py-1.5 text-sm transition-colors border border-border hover:bg-surface-muted"
@@ -126,6 +134,14 @@ export function PromptDetailPanel() {
           // eslint-disable-next-line react/no-danger
           dangerouslySetInnerHTML={{ __html: renderMarkdown(prompt.content) }}
         />
+
+        {/* Notes section */}
+        {prompt.notes && (
+          <div className="border-t border-border px-6 py-4">
+            <h3 className="text-xs font-semibold uppercase tracking-wider text-text mb-2">Notes</h3>
+            <p className="whitespace-pre-wrap text-sm text-text">{prompt.notes}</p>
+          </div>
+        )}
 
         {/* Metadata footer */}
         <div className="border-t border-border px-6 py-3 text-xs text-text space-y-1">
