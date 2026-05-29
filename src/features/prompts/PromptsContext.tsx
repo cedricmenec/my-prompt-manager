@@ -3,8 +3,11 @@ import {
   useContext,
   useReducer,
   useEffect,
+  useMemo,
+  useState,
   type ReactNode,
 } from 'react'
+import Fuse from 'fuse.js'
 import type { Prompt } from '@/domain/promptSchema'
 import { promptRepository } from '@/infrastructure/promptRepository'
 
@@ -86,6 +89,9 @@ function promptsReducer(state: PromptsState, action: Action): PromptsState {
 interface PromptsContextValue {
   state: PromptsState
   dispatch: React.Dispatch<Action>
+  searchQuery: string
+  setSearchQuery: (query: string) => void
+  filteredPrompts: Prompt[]
 }
 
 const PromptsContext = createContext<PromptsContextValue | null>(null)
@@ -96,6 +102,7 @@ const PromptsContext = createContext<PromptsContextValue | null>(null)
 
 export function PromptsProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(promptsReducer, initialState)
+  const [searchQuery, setSearchQuery] = useState('')
 
   useEffect(() => {
     promptRepository
@@ -104,8 +111,26 @@ export function PromptsProvider({ children }: { children: ReactNode }) {
       .catch(console.error)
   }, [])
 
+  const fuse = useMemo(
+    () =>
+      new Fuse(state.prompts, {
+        keys: [
+          { name: 'title', weight: 2 },
+          { name: 'description', weight: 1 },
+        ],
+        threshold: 0.4,
+        ignoreLocation: true,
+      }),
+    [state.prompts],
+  )
+
+  const filteredPrompts = useMemo(() => {
+    if (searchQuery.length <= 2) return state.prompts
+    return fuse.search(searchQuery).map((r) => r.item)
+  }, [searchQuery, fuse, state.prompts])
+
   return (
-    <PromptsContext.Provider value={{ state, dispatch }}>
+    <PromptsContext.Provider value={{ state, dispatch, searchQuery, setSearchQuery, filteredPrompts }}>
       {children}
     </PromptsContext.Provider>
   )
