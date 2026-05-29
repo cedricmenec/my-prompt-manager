@@ -23,3 +23,28 @@ The system SHALL render a sticky top bar inside the main content area (not spann
 - **WHEN** the user clears the search input
 - **THEN** all prompts are displayed again
 
+---
+
+### Requirement: View toggle in top app bar
+The top bar SHALL display view-toggle icon buttons (grid and list) to the right of the search input. Clicking a toggle button SHALL switch the active view mode between grid and list. The selected view mode SHALL be persisted in `localStorage` under the key `promptViewMode` and restored on next load. The default mode SHALL be `grid`. Filter buttons ("Tags", "Language", "Favorites") SHALL NOT be rendered in the top bar; they are deferred to a future change.
+
+#### Scenario: View toggle buttons are rendered
+- **WHEN** the top bar is rendered
+- **THEN** grid-view and list-view toggle buttons are visible; the active mode button appears highlighted
+
+#### Scenario: Clicking grid toggle switches to grid view
+- **WHEN** the user clicks the grid-view toggle button
+- **THEN** the prompt list switches to grid layout and the grid button appears active
+
+#### Scenario: Clicking list toggle switches to list view
+- **WHEN** the user clicks the list-view toggle button
+- **THEN** the prompt list switches to list layout and the list button appears active
+
+#### Scenario: View mode persists across reloads
+- **WHEN** the user selects list view and then reloads the page
+- **THEN** the app opens in list view
+
+#### Scenario: Filter buttons are absent
+- **WHEN** the top bar is rendered
+- **THEN** no "Tags", "Language", or "Favorites" filter buttons are present
+
