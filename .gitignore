@@ -24,7 +24,8 @@ dist-ssr
 *.sw?
 
 # Agents and tools
-.github/
+.github/skills
+.github/prompts
 .agents/
 .opencode/
 .claude/
