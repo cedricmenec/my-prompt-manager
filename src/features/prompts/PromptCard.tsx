@@ -19,8 +19,9 @@ export function PromptCard({ prompt, isSelected, onClick }: PromptCardProps) {
       ].join(' ')}
     >
       <p className="font-semibold text-text-heading truncate">{prompt.title}</p>
+      {/* 6.3 Truncate description to two lines */}
       {prompt.description && (
-        <p className="mt-0.5 text-sm text-text truncate">{prompt.description}</p>
+        <p className="mt-0.5 text-sm text-text line-clamp-2">{prompt.description}</p>
       )}
       {prompt.tags && prompt.tags.length > 0 && (
         <div className="mt-1.5 flex flex-wrap gap-1">
