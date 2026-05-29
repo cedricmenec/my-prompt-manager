@@ -92,6 +92,8 @@ interface PromptsContextValue {
   searchQuery: string
   setSearchQuery: (query: string) => void
   filteredPrompts: Prompt[]
+  viewMode: 'grid' | 'list'
+  setViewMode: (mode: 'grid' | 'list') => void
 }
 
 const PromptsContext = createContext<PromptsContextValue | null>(null)
@@ -103,6 +105,13 @@ const PromptsContext = createContext<PromptsContextValue | null>(null)
 export function PromptsProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(promptsReducer, initialState)
   const [searchQuery, setSearchQuery] = useState('')
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>(
+    () => (localStorage.getItem('promptViewMode') as 'grid' | 'list') ?? 'grid',
+  )
+
+  useEffect(() => {
+    localStorage.setItem('promptViewMode', viewMode)
+  }, [viewMode])
 
   useEffect(() => {
     promptRepository
@@ -130,7 +139,7 @@ export function PromptsProvider({ children }: { children: ReactNode }) {
   }, [searchQuery, fuse, state.prompts])
 
   return (
-    <PromptsContext.Provider value={{ state, dispatch, searchQuery, setSearchQuery, filteredPrompts }}>
+    <PromptsContext.Provider value={{ state, dispatch, searchQuery, setSearchQuery, filteredPrompts, viewMode, setViewMode }}>
       {children}
     </PromptsContext.Provider>
   )

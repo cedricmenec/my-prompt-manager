@@ -1,16 +1,19 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { usePrompts } from '@/features/prompts/PromptsContext'
+import { useDebounce } from '@/shared/hooks/useDebounce'
 
 export function TopAppBar() {
-  // 3.5 View toggle state (non-functional, rendered only)
-  const [activeView, setActiveView] = useState<'grid' | 'list'>('grid')
+  const { setSearchQuery, viewMode, setViewMode } = usePrompts()
+  const [inputValue, setInputValue] = useState('')
+  const debouncedQuery = useDebounce(inputValue, 150)
 
-  // 3.4 Filter buttons (rendered, non-functional)
-  const filterButtons = ['Tags', 'Language', 'Favorites'] as const
+  useEffect(() => {
+    setSearchQuery(debouncedQuery)
+  }, [debouncedQuery, setSearchQuery])
 
   return (
-    // 3.2 Sticky top bar inside the main region
     <div className="sticky top-0 z-10 flex flex-col gap-2 border-b border-border bg-surface px-4 py-3">
-      {/* 3.3 Search input with search icon */}
+      {/* Search input with search icon */}
       <div className="relative">
         <svg
           className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-text"
@@ -29,31 +32,21 @@ export function TopAppBar() {
         <input
           type="search"
           placeholder="Search prompts..."
+          value={inputValue}
+          onChange={(e) => setInputValue(e.target.value)}
           className="w-full rounded-lg border border-border bg-surface-muted py-2 pl-9 pr-4 text-sm text-text-heading placeholder:text-text focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-          readOnly
         />
       </div>
 
-      {/* Filter toolbar + view toggle */}
+      {/* View toggle */}
       <div className="flex items-center gap-2">
-        {/* 3.4 Filter buttons */}
-        {filterButtons.map((label) => (
-          <button
-            key={label}
-            className="rounded-md border border-border bg-surface px-3 py-1.5 text-xs font-medium text-text transition-colors hover:bg-surface-muted"
-          >
-            {label}
-          </button>
-        ))}
-
-        {/* 3.5 View toggle buttons */}
         <div className="ml-auto flex overflow-hidden rounded-md border border-border">
           <button
             aria-label="Grid view"
-            onClick={() => setActiveView('grid')}
+            onClick={() => setViewMode('grid')}
             className={[
               'flex items-center justify-center p-1.5 transition-colors',
-              activeView === 'grid'
+              viewMode === 'grid'
                 ? 'bg-primary text-white'
                 : 'bg-surface text-text hover:bg-surface-muted',
             ].join(' ')}
@@ -75,10 +68,10 @@ export function TopAppBar() {
           </button>
           <button
             aria-label="List view"
-            onClick={() => setActiveView('list')}
+            onClick={() => setViewMode('list')}
             className={[
               'flex items-center justify-center border-l border-border p-1.5 transition-colors',
-              activeView === 'list'
+              viewMode === 'list'
                 ? 'bg-primary text-white'
                 : 'bg-surface text-text hover:bg-surface-muted',
             ].join(' ')}

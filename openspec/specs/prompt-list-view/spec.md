@@ -3,9 +3,7 @@
 ## Purpose
 
 Defines the main dashboard grid of prompt cards: rendering, sorting, selection, and empty state.
-
 ## Requirements
-
 ### Requirement: Prompt list renders all stored prompts
 The system SHALL render prompts in the main content canvas in either grid or list layout depending on the active view mode. In grid mode, the layout SHALL use 1 column on small screens, 2 columns on medium screens, and 3 columns on large screens. In list mode, prompts SHALL be rendered as full-width rows. Both layouts SHALL be sorted by `updatedAt` descending. The displayed set SHALL reflect any active search filter.
 
@@ -58,21 +56,23 @@ The system SHALL track a `selectedPromptId` in the `PromptsContext`. Clicking a 
 ---
 
 ### Requirement: View-mode toggle switches between grid and list layouts
-The system SHALL render a view-mode toggle control (e.g., icon buttons for grid and list) in the list view toolbar, alongside the search bar. Clicking the toggle SHALL switch the prompt display between grid layout and list layout. The selected view mode SHALL be persisted in `localStorage` under the key `promptViewMode` and restored on next load. The default mode SHALL be `grid`.
+The view-mode toggle control (grid / list icon buttons) SHALL be rendered in the `TopAppBar`, not in the `PromptListView` toolbar. `PromptListView` SHALL read the active `viewMode` from `PromptsContext` and render accordingly. `PromptListView` SHALL NOT own `viewMode` state, nor render any view-toggle buttons. The selected view mode SHALL continue to be persisted in `localStorage` under `promptViewMode` and restored on load; this persistence is now the responsibility of `PromptsContext` (or `TopAppBar`). The default mode SHALL be `grid`.
 
 #### Scenario: Default mode is grid
 - **WHEN** the user opens the app for the first time with no stored preference
 - **THEN** the prompts are displayed in grid layout
 
-#### Scenario: Switching to list view
-- **WHEN** the user clicks the list-view toggle button
+#### Scenario: Switching to list view via TopAppBar
+- **WHEN** the user clicks the list-view toggle button in the top app bar
 - **THEN** the prompts are re-rendered as list rows
 
 #### Scenario: View mode persists across reloads
 - **WHEN** the user selects list view and then reloads the page
 - **THEN** the app opens in list view
 
----
+#### Scenario: PromptListView does not render a toolbar
+- **WHEN** PromptListView is rendered
+- **THEN** no search input or view-toggle buttons appear inside the list view component itself
 
 ### Requirement: List view renders prompts as compact rows
 In list view, the system SHALL render each prompt as a horizontal row showing: `title` (bold, single line), `description` (single line, truncated with ellipsis), and `tags` as badge chips. Rows SHALL be sorted by `updatedAt` descending, consistent with grid view. Clicking a row SHALL select it and open the detail panel, same as clicking a card in grid view.
