@@ -1,0 +1,59 @@
+@import "tailwindcss";
+
+@theme {
+  /* Brand colours */
+  --color-primary: #aa3bff;
+  --color-primary-bg: rgba(170, 59, 255, 0.1);
+  --color-primary-border: rgba(170, 59, 255, 0.5);
+
+  /* Surface colours */
+  --color-surface: #ffffff;
+  --color-surface-muted: #f4f3ec;
+  --color-border: #e5e4e7;
+
+  /* Text colours */
+  --color-text: #6b6375;
+  --color-text-heading: #08060d;
+
+  /* Dark mode surfaces */
+  --color-surface-dark: #16171d;
+  --color-surface-muted-dark: #1f2028;
+  --color-border-dark: #2e303a;
+  --color-text-dark: #9ca3af;
+  --color-text-heading-dark: #f3f4f6;
+
+  /* Font stacks */
+  --font-sans: system-ui, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: ui-monospace, Consolas, monospace;
+
+  /* Font sizes */
+  --font-size-xs: 0.75rem;
+  --font-size-sm: 0.875rem;
+  --font-size-base: 1rem;
+  --font-size-lg: 1.125rem;
+  --font-size-xl: 1.25rem;
+  --font-size-2xl: 1.5rem;
+  --font-size-3xl: 1.875rem;
+}
+
+/* Base resets */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  color: var(--color-text);
+  background: var(--color-surface);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+#root {
+  min-height: 100svh;
+  display: flex;
+  flex-direction: column;
+}

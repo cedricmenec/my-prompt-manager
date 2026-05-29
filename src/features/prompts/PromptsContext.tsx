@@ -1,0 +1,124 @@
+import {
+  createContext,
+  useContext,
+  useReducer,
+  useEffect,
+  type ReactNode,
+} from 'react'
+import type { Prompt } from '@/domain/promptSchema'
+import { promptRepository } from '@/infrastructure/promptRepository'
+
+// ---------------------------------------------------------------------------
+// State & Actions
+// ---------------------------------------------------------------------------
+
+export interface PromptsState {
+  prompts: Prompt[]
+  selectedPromptId: string | null
+  editorMode: 'create' | 'edit' | null
+}
+
+type Action =
+  | { type: 'LOAD'; prompts: Prompt[] }
+  | { type: 'ADD'; prompt: Prompt }
+  | { type: 'UPDATE'; prompt: Prompt }
+  | { type: 'REMOVE'; id: string }
+  | { type: 'SELECT'; id: string | null }
+  | { type: 'OPEN_CREATE' }
+  | { type: 'OPEN_EDIT' }
+  | { type: 'CLOSE_EDITOR' }
+
+const initialState: PromptsState = {
+  prompts: [],
+  selectedPromptId: null,
+  editorMode: null,
+}
+
+// ---------------------------------------------------------------------------
+// Reducer
+// ---------------------------------------------------------------------------
+
+function promptsReducer(state: PromptsState, action: Action): PromptsState {
+  switch (action.type) {
+    case 'LOAD':
+      return { ...state, prompts: action.prompts }
+
+    case 'ADD':
+      return { ...state, prompts: [action.prompt, ...state.prompts] }
+
+    case 'UPDATE':
+      return {
+        ...state,
+        prompts: state.prompts.map((p) =>
+          p.id === action.prompt.id ? action.prompt : p,
+        ),
+      }
+
+    case 'REMOVE':
+      return {
+        ...state,
+        prompts: state.prompts.filter((p) => p.id !== action.id),
+        selectedPromptId:
+          state.selectedPromptId === action.id ? null : state.selectedPromptId,
+      }
+
+    case 'SELECT':
+      return { ...state, selectedPromptId: action.id }
+
+    case 'OPEN_CREATE':
+      return { ...state, editorMode: 'create' }
+
+    case 'OPEN_EDIT':
+      return { ...state, editorMode: 'edit' }
+
+    case 'CLOSE_EDITOR':
+      return { ...state, editorMode: null }
+
+    default:
+      return state
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Context
+// ---------------------------------------------------------------------------
+
+interface PromptsContextValue {
+  state: PromptsState
+  dispatch: React.Dispatch<Action>
+}
+
+const PromptsContext = createContext<PromptsContextValue | null>(null)
+
+// ---------------------------------------------------------------------------
+// Provider
+// ---------------------------------------------------------------------------
+
+export function PromptsProvider({ children }: { children: ReactNode }) {
+  const [state, dispatch] = useReducer(promptsReducer, initialState)
+
+  useEffect(() => {
+    promptRepository
+      .getAll()
+      .then((prompts) => dispatch({ type: 'LOAD', prompts }))
+      .catch(console.error)
+  }, [])
+
+  return (
+    <PromptsContext.Provider value={{ state, dispatch }}>
+      {children}
+    </PromptsContext.Provider>
+  )
+}
+
+// ---------------------------------------------------------------------------
+// Hook
+// ---------------------------------------------------------------------------
+
+export function usePrompts(): PromptsContextValue {
+  const ctx = useContext(PromptsContext)
+  if (!ctx) {
+    throw new Error('usePrompts must be used within a PromptsProvider')
+  }
+  return ctx
+}

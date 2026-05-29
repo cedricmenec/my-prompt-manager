@@ -1,0 +1,1 @@
+Tu es en charge d'implémenter une application de type local first, bring your own key (BYOK), static web app. Pour connaître les règles d'implémentation de ce type d'application, utilise le skill suivant : local-first-byok-static-web-app
