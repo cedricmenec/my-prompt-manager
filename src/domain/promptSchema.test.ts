@@ -25,8 +25,21 @@ describe('PromptSchema', () => {
       tags: ['creative', 'fiction'],
       model: 'gpt-4o',
       temperature: 0.8,
+      imageUrl: 'https://example.com/image.png',
     })
     expect(result.success).toBe(true)
+  })
+
+  it('fails when imageUrl is not a valid URL', () => {
+    const result = PromptSchema.safeParse({
+      ...validPrompt,
+      imageUrl: 'not-a-url',
+    })
+    expect(result.success).toBe(false)
+    if (!result.success) {
+      const paths = result.error.issues.map((i) => i.path[0])
+      expect(paths).toContain('imageUrl')
+    }
   })
 
   it('fails when title is missing', () => {

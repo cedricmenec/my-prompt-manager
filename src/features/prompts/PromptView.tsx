@@ -127,6 +127,7 @@ export function PromptView() {
   const [tags, setTags] = useState<string[]>(prompt?.tags ?? [])
   const [notes, setNotes] = useState(prompt?.notes ?? '')
   const [model, setModel] = useState(prompt?.model ?? '')
+  const [imageUrl, setImageUrl] = useState(prompt?.imageUrl ?? '')
   const [temperature, setTemperature] = useState<string>(
     prompt?.temperature !== undefined ? String(prompt.temperature) : '',
   )
@@ -218,6 +219,7 @@ export function PromptView() {
           tags,
           notes: notes.trim() || undefined,
           model: model.trim() || undefined,
+          imageUrl: imageUrl.trim() || undefined,
           temperature: tempValue,
         })
         dispatch({ type: 'UPDATE', prompt: updated })
@@ -231,6 +233,7 @@ export function PromptView() {
           tags,
           notes: notes.trim() || undefined,
           model: model.trim() || undefined,
+          imageUrl: imageUrl.trim() || undefined,
           temperature: tempValue,
           isFavorite: false,
         })
@@ -255,6 +258,7 @@ export function PromptView() {
       setTags(prompt?.tags ?? [])
       setNotes(prompt?.notes ?? '')
       setModel(prompt?.model ?? '')
+      setImageUrl(prompt?.imageUrl ?? '')
       setTemperature(prompt?.temperature !== undefined ? String(prompt.temperature) : '')
       setErrors({})
       setIsEditing(false)
@@ -454,6 +458,18 @@ export function PromptView() {
                   onChange={(e) => setDescription(e.target.value)}
                   className="w-full rounded-md border border-border bg-surface px-3 py-1.5 text-sm text-text-heading focus:border-primary focus:outline-none resize-y"
                   placeholder="Short description (optional)"
+                />
+              </div>
+
+              {/* Image URL */}
+              <div>
+                <label className="block text-sm font-medium text-text-heading mb-1">Image de référence (URL)</label>
+                <input
+                  type="text"
+                  value={imageUrl}
+                  onChange={(e) => setImageUrl(e.target.value)}
+                  className="w-full rounded-md border border-border bg-surface px-3 py-1.5 text-sm text-text-heading focus:border-primary focus:outline-none"
+                  placeholder="https://example.com/image.png (optional)"
                 />
               </div>
 

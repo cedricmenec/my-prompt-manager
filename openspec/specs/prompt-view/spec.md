@@ -81,11 +81,11 @@ In read mode, `PromptView` SHALL display the prompt fields in order:
 ---
 
 ### Requirement: PromptView edit mode provides an inline form
-When the user clicks "Edit", `PromptView` SHALL switch to edit mode in place. Edit mode SHALL render editable fields for all prompt properties: `title`, `content`, `description`, `tags`, `notes`, `model`, `temperature`. The `description` field SHALL be a multiline `<textarea>` (minimum 3 visible rows). The action bar SHALL show "Save" and "Cancel" in place of the default actions.
+When the user clicks "Edit", `PromptView` SHALL switch to edit mode in place. Edit mode SHALL render editable fields for all prompt properties: `title`, `content`, `description`, `tags`, `notes`, `model`, `temperature`, `imageUrl`. The `description` field SHALL be a multiline `<textarea>` (minimum 3 visible rows). The `imageUrl` field SHALL be a text input for the reference image URL. The action bar SHALL show "Save" and "Cancel" in place of the default actions.
 
 #### Scenario: Edit mode shows all form fields
 - **WHEN** the user clicks "Edit"
-- **THEN** all seven fields are rendered as interactive inputs pre-filled with current values, with `description` rendered as a multiline textarea
+- **THEN** all eight fields are rendered as interactive inputs pre-filled with current values, with `description` rendered as a multiline textarea and `imageUrl` as a text input
 
 #### Scenario: Description textarea accepts multiline input
 - **WHEN** the user types a multi-paragraph description in the description textarea

@@ -17,6 +17,7 @@ The system SHALL define a `Prompt` TypeScript type inferred from a Zod schema as
 - `notes`: string — optional (free-text author notes; not part of the prompt body)
 - `model`: string — optional (AI model hint, e.g. `gpt-4o`)
 - `temperature`: number — optional, between 0 and 2 inclusive
+- `imageUrl`: string — optional, must be a valid URL if provided
 - `createdAt`: ISO 8601 date string — required
 - `updatedAt`: ISO 8601 date string — required
 

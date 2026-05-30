@@ -10,6 +10,7 @@ export const PromptSchema = z.object({
   notes: z.string().optional(),
   model: z.string().optional(),
   temperature: z.number().min(0).max(2).optional(),
+  imageUrl: z.string().url().optional(),
   createdAt: z.string().datetime(),
   updatedAt: z.string().datetime(),
 })

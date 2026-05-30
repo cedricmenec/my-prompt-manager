@@ -34,11 +34,15 @@ The system SHALL render prompts in the main content canvas in either grid or lis
 ---
 
 ### Requirement: Prompt card displays metadata
-Each prompt card SHALL show `title` (bold), `description` (two lines, truncated with ellipsis), and each tag rendered as a `Badge` component. Cards with no description SHALL omit the description row rather than showing a blank line.
+Each prompt card SHALL show `title` (bold), `description` (two lines, truncated with ellipsis), and each tag rendered as a `Badge` component. Cards with no description SHALL omit the description row rather than showing a blank line. If a prompt has an `imageUrl`, it SHALL be displayed as a "hero" image at the top of the card (grid mode only).
 
 #### Scenario: Card with all fields renders completely
 - **WHEN** a prompt with title, description, and three tags is rendered
 - **THEN** the title, description, and all three tag badges are visible
+
+#### Scenario: Card with imageUrl displays hero image
+- **WHEN** grid mode is active and a prompt has an `imageUrl`
+- **THEN** the card displays the image at the top, spanning full width
 
 #### Scenario: Card without description omits description row
 - **WHEN** a prompt has no `description` field
