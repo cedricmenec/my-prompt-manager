@@ -28,7 +28,7 @@ export type PromptFilter =
 export interface PromptsState {
   prompts: Prompt[]
   selectedPromptId: string | null
-  editorMode: 'create' | 'edit' | null
+  viewMode: 'read' | 'edit' | null
 }
 
 type Action =
@@ -45,7 +45,7 @@ type Action =
 const initialState: PromptsState = {
   prompts: [],
   selectedPromptId: null,
-  editorMode: null,
+  viewMode: null,
 }
 
 // ---------------------------------------------------------------------------
@@ -77,19 +77,19 @@ function promptsReducer(state: PromptsState, action: Action): PromptsState {
       }
 
     case 'SELECT':
-      return { ...state, selectedPromptId: action.id }
+      return { ...state, selectedPromptId: action.id, viewMode: 'read' }
 
     case 'DESELECT':
-      return { ...state, selectedPromptId: null }
+      return { ...state, selectedPromptId: null, viewMode: null }
 
     case 'OPEN_CREATE':
-      return { ...state, editorMode: 'create' }
+      return { ...state, selectedPromptId: null, viewMode: 'edit' }
 
     case 'OPEN_EDIT':
-      return { ...state, editorMode: 'edit' }
+      return { ...state, viewMode: 'edit' }
 
     case 'CLOSE_EDITOR':
-      return { ...state, editorMode: null }
+      return { ...state, viewMode: null }
 
     default:
       return state

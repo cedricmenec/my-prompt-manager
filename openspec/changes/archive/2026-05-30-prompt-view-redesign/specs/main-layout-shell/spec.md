@@ -1,9 +1,5 @@
-# Main Layout Shell
+## MODIFIED Requirements
 
-## Purpose
-
-Defines the root application layout shell that composes the sidebar navigation, top app bar, and scrollable content canvas into a cohesive full-viewport layout.
-## Requirements
 ### Requirement: Main layout shell composes sidebar, top bar, and content canvas
 The system SHALL provide a `MainLayoutShell` component that renders the `SidebarNav` on the left, and a main region on the right. The `TopAppBar` SHALL be rendered above the content canvas **only when no prompt is selected**. When `PromptView` is active (a prompt is selected or being created), the `TopAppBar` SHALL be hidden and `PromptView` SHALL occupy the full main region. The shell SHALL occupy the full viewport height without overflow on the body.
 
@@ -18,11 +14,3 @@ The system SHALL provide a `MainLayoutShell` component that renders the `Sidebar
 #### Scenario: Content canvas scrolls independently of sidebar
 - **WHEN** the user scrolls the content canvas
 - **THEN** the sidebar remains in place while only the content scrolls
-
-### Requirement: App.tsx delegates layout to MainLayoutShell
-The system SHALL use `MainLayoutShell` in `src/app/App.tsx` as the top-level layout wrapper. The existing orchestration logic (showing editor overlay, showing detail panel) SHALL remain in `App.tsx`, passed as children or slots to the shell.
-
-#### Scenario: App renders within the layout shell
-- **WHEN** the app mounts
-- **THEN** `MainLayoutShell` is the root visual container wrapping all app content
-
