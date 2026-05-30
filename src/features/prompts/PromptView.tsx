@@ -1,4 +1,7 @@
 import { useState, useEffect, useRef, type KeyboardEvent } from 'react'
+import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
+import remarkBreaks from 'remark-breaks'
 import { usePrompts } from './PromptsContext'
 import { promptRepository } from '@/infrastructure/promptRepository'
 import type { Prompt } from '@/domain/promptSchema'
@@ -8,33 +11,27 @@ import { Modal } from '@/shared/ui/Modal'
 import { useToast, ToastContainer } from '@/shared/ui/Toast'
 
 // ---------------------------------------------------------------------------
-// Minimal Markdown → HTML renderer (reused from PromptDetailPanel)
+// Preserve leading whitespace (spaces/tabs) in Markdown rendering.
+// The Markdown parser normally strips leading spaces; converting them to
+// non-breaking spaces before parsing keeps indentation visible (e.g. JSON).
+// Code fences are left untouched — <pre> already handles their indentation.
 // ---------------------------------------------------------------------------
 
-function renderMarkdown(md: string): string {
+function preserveLeadingWhitespace(md: string): string {
+  let inCodeBlock = false
   return md
-    .replace(/```[\s\S]*?```/g, (block) => {
-      const code = block.replace(/^```[^\n]*\n?/, '').replace(/```$/, '')
-      return `<pre><code>${escHtml(code)}</code></pre>`
+    .split('\n')
+    .map((line) => {
+      if (/^```/.test(line)) {
+        inCodeBlock = !inCodeBlock
+        return line
+      }
+      if (inCodeBlock) return line
+      return line.replace(/^[ \t]+/, (ws) =>
+        ws.replace(/ /g, '\u00A0').replace(/\t/g, '\u00A0\u00A0\u00A0\u00A0'),
+      )
     })
-    .replace(/`([^`]+)`/g, (_, c) => `<code>${escHtml(c)}</code>`)
-    .replace(/^### (.+)$/gm, '<h3>$1</h3>')
-    .replace(/^## (.+)$/gm, '<h2>$1</h2>')
-    .replace(/^# (.+)$/gm, '<h1>$1</h1>')
-    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-    .replace(/\*(.+?)\*/g, '<em>$1</em>')
-    .replace(/\n\n/g, '</p><p>')
-    .replace(/^(?!<[h|p|u|o|l|c|p])/gm, '')
-    .trim()
-    .replace(/^(.)/s, '<p>$1')
-    .replace(/(.)$/s, '$1</p>')
-}
-
-function escHtml(s: string): string {
-  return s
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
+    .join('\n')
 }
 
 // ---------------------------------------------------------------------------
@@ -361,7 +358,9 @@ export function PromptView() {
 
             {/* Description */}
             {p.description && (
-              <p className="text-base text-text leading-relaxed">{p.description}</p>
+              <div className="prose prose-sm max-w-none italic text-text">
+                <ReactMarkdown remarkPlugins={[remarkGfm, remarkBreaks]}>{preserveLeadingWhitespace(p.description)}</ReactMarkdown>
+              </div>
             )}
 
             {/* Copy CTA — above content */}
@@ -375,12 +374,10 @@ export function PromptView() {
             </div>
 
             {/* Content block — terminal/code-block style */}
-            <div className="rounded-lg border-2 border-border bg-surface-muted p-4 font-mono text-sm">
-              <div
-                className="prose prose-sm max-w-none text-text"
-                // eslint-disable-next-line react/no-danger
-                dangerouslySetInnerHTML={{ __html: renderMarkdown(p.content) }}
-              />
+            <div className="rounded-lg border-2 border-border bg-surface-muted p-4 text-sm">
+              <div className="prose prose-sm max-w-none text-text">
+                <ReactMarkdown remarkPlugins={[remarkGfm, remarkBreaks]}>{preserveLeadingWhitespace(p.content)}</ReactMarkdown>
+              </div>
             </div>
 
             {/* Copy CTA — below content */}
@@ -397,7 +394,9 @@ export function PromptView() {
             {p.notes && (
               <div className="rounded-lg border border-border bg-surface p-4">
                 <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-text opacity-60">Notes</p>
-                <p className="whitespace-pre-wrap text-sm text-text">{p.notes}</p>
+                <div className="prose prose-sm max-w-none text-text">
+                  <ReactMarkdown remarkPlugins={[remarkGfm, remarkBreaks]}>{preserveLeadingWhitespace(p.notes)}</ReactMarkdown>
+                </div>
               </div>
             )}
           </div>
@@ -449,11 +448,11 @@ export function PromptView() {
               {/* Description */}
               <div>
                 <label className="block text-sm font-medium text-text-heading mb-1">Description</label>
-                <input
-                  type="text"
+                <textarea
+                  rows={3}
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
-                  className="w-full rounded-md border border-border bg-surface px-3 py-1.5 text-sm text-text-heading focus:border-primary focus:outline-none"
+                  className="w-full rounded-md border border-border bg-surface px-3 py-1.5 text-sm text-text-heading focus:border-primary focus:outline-none resize-y"
                   placeholder="Short description (optional)"
                 />
               </div>
