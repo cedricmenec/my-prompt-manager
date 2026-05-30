@@ -7,6 +7,7 @@ export const PromptSchema = z.object({
   description: z.string().optional(),
   tags: z.array(z.string()).optional().default([]),
   isFavorite: z.boolean().optional().default(false),
+  type: z.enum(['text', 'image']).optional().default('text'),
   notes: z.string().optional(),
   model: z.string().optional(),
   temperature: z.number().min(0).max(2).optional(),

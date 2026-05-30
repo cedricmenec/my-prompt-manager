@@ -70,4 +70,29 @@ describe('PromptSchema', () => {
     const result = PromptSchema.safeParse({ ...validPrompt, temperature: -0.1 })
     expect(result.success).toBe(false)
   })
+
+  it('defaults type to "text" when type is omitted', () => {
+    const result = PromptSchema.safeParse(validPrompt)
+    expect(result.success).toBe(true)
+    if (result.success) {
+      expect(result.data.type).toBe('text')
+    }
+  })
+
+  it('accepts type "image"', () => {
+    const result = PromptSchema.safeParse({ ...validPrompt, type: 'image' })
+    expect(result.success).toBe(true)
+    if (result.success) {
+      expect(result.data.type).toBe('image')
+    }
+  })
+
+  it('fails when type is an invalid value', () => {
+    const result = PromptSchema.safeParse({ ...validPrompt, type: 'video' })
+    expect(result.success).toBe(false)
+    if (!result.success) {
+      const paths = result.error.issues.map((i) => i.path[0])
+      expect(paths).toContain('type')
+    }
+  })
 })

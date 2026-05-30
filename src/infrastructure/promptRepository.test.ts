@@ -8,6 +8,7 @@ const baseData = {
   title: 'Test Prompt',
   content: 'Some content',
   tags: [] as string[],
+  type: 'text' as const,
 }
 
 beforeEach(() => {
@@ -97,6 +98,7 @@ describe('promptRepository.bulkImport', () => {
       content: `Content ${i}`,
       tags: [] as string[],
       isFavorite: false,
+      type: 'text' as const,
       createdAt: now,
       updatedAt: now,
     }))

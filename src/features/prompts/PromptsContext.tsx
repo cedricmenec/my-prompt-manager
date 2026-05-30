@@ -110,6 +110,8 @@ interface PromptsContextValue {
   filteredPrompts: Prompt[]
   viewMode: 'grid' | 'list'
   setViewMode: (mode: 'grid' | 'list') => void
+  appView: 'prompts' | 'gallery'
+  setAppView: (view: 'prompts' | 'gallery') => void
 }
 
 const PromptsContext = createContext<PromptsContextValue | null>(null)
@@ -125,10 +127,17 @@ export function PromptsProvider({ children }: { children: ReactNode }) {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>(
     () => (localStorage.getItem('promptViewMode') as 'grid' | 'list') ?? 'grid',
   )
+  const [appView, setAppView] = useState<'prompts' | 'gallery'>(
+    () => (localStorage.getItem('promptAppView') as 'prompts' | 'gallery') ?? 'prompts',
+  )
 
   useEffect(() => {
     localStorage.setItem('promptViewMode', viewMode)
   }, [viewMode])
+
+  useEffect(() => {
+    localStorage.setItem('promptAppView', appView)
+  }, [appView])
 
   useEffect(() => {
     promptRepository
@@ -163,7 +172,7 @@ export function PromptsProvider({ children }: { children: ReactNode }) {
   }, [searchQuery, state.prompts, activeFilter])
 
   return (
-    <PromptsContext.Provider value={{ state, dispatch, searchQuery, setSearchQuery, activeFilter, setActiveFilter, filteredPrompts, viewMode, setViewMode }}>
+    <PromptsContext.Provider value={{ state, dispatch, searchQuery, setSearchQuery, activeFilter, setActiveFilter, filteredPrompts, viewMode, setViewMode, appView, setAppView }}>
       {children}
     </PromptsContext.Provider>
   )

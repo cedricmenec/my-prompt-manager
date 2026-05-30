@@ -3,7 +3,7 @@ import { usePrompts } from '@/features/prompts/PromptsContext'
 import { useDebounce } from '@/shared/hooks/useDebounce'
 
 export function TopAppBar() {
-  const { setSearchQuery, viewMode, setViewMode } = usePrompts()
+  const { setSearchQuery, viewMode, setViewMode, appView } = usePrompts()
   const [inputValue, setInputValue] = useState('')
   const debouncedQuery = useDebounce(inputValue, 150)
 
@@ -38,7 +38,8 @@ export function TopAppBar() {
         />
       </div>
 
-      {/* View toggle */}
+      {/* View toggle — hidden in gallery view */}
+      {appView !== 'gallery' && (
       <div className="flex items-center gap-2">
         <div className="ml-auto flex overflow-hidden rounded-md border border-border">
           <button
@@ -89,6 +90,7 @@ export function TopAppBar() {
           </button>
         </div>
       </div>
+      )}
     </div>
   )
 }

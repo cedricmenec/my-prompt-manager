@@ -34,19 +34,23 @@ The system SHALL render prompts in the main content canvas in either grid or lis
 ---
 
 ### Requirement: Prompt card displays metadata
-Each prompt card SHALL show `title` (bold), `description` (two lines, truncated with ellipsis), and each tag rendered as a `Badge` component. Cards with no description SHALL omit the description row rather than showing a blank line. If a prompt has an `imageUrl`, it SHALL be displayed as a "hero" image at the top of the card (grid mode only).
+Each prompt card SHALL show `title` (bold), `description` (two lines, truncated with ellipsis), and each tag rendered as a `Badge` component. Cards with no description SHALL omit the description row rather than showing a blank line. Prompts with `type === 'image'` SHALL display a small image badge icon (🖼) on the card to signal their type. Cards SHALL NOT display a hero/thumbnail image in the Prompts view, regardless of whether `imageUrl` is set.
 
 #### Scenario: Card with all fields renders completely
 - **WHEN** a prompt with title, description, and three tags is rendered
 - **THEN** the title, description, and all three tag badges are visible
 
-#### Scenario: Card with imageUrl displays hero image
-- **WHEN** grid mode is active and a prompt has an `imageUrl`
-- **THEN** the card displays the image at the top, spanning full width
-
 #### Scenario: Card without description omits description row
 - **WHEN** a prompt has no `description` field
 - **THEN** the card renders only title and tags with no empty space
+
+#### Scenario: Image-type prompt card shows image badge
+- **WHEN** a prompt with `type === 'image'` is rendered in the Prompts view
+- **THEN** a small image-type indicator badge is visible on the card
+
+#### Scenario: Image-type prompt card does NOT show a thumbnail
+- **WHEN** a prompt with `type === 'image'` and a valid `imageUrl` is rendered in the Prompts view
+- **THEN** no hero/thumbnail image is displayed on the card
 
 ---
 

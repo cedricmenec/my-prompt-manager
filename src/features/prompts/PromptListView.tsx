@@ -1,9 +1,14 @@
 import { usePrompts } from './PromptsContext'
 import { PromptCard } from './PromptCard'
 import { PromptRow } from './PromptRow'
+import { GalleryView } from './GalleryView'
 
 export function PromptListView() {
-  const { state, dispatch, filteredPrompts, viewMode } = usePrompts()
+  const { state, dispatch, filteredPrompts, viewMode, appView } = usePrompts()
+
+  if (appView === 'gallery') {
+    return <GalleryView />
+  }
 
   const sorted = [...filteredPrompts].sort(
     (a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime(),

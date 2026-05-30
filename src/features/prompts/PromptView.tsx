@@ -128,6 +128,7 @@ export function PromptView() {
   const [notes, setNotes] = useState(prompt?.notes ?? '')
   const [model, setModel] = useState(prompt?.model ?? '')
   const [imageUrl, setImageUrl] = useState(prompt?.imageUrl ?? '')
+  const [type, setType] = useState<'text' | 'image'>(prompt?.type ?? 'text')
   const [temperature, setTemperature] = useState<string>(
     prompt?.temperature !== undefined ? String(prompt.temperature) : '',
   )
@@ -221,6 +222,7 @@ export function PromptView() {
           model: model.trim() || undefined,
           imageUrl: imageUrl.trim() || undefined,
           temperature: tempValue,
+          type,
         })
         dispatch({ type: 'UPDATE', prompt: updated })
         setIsEditing(false)
@@ -236,6 +238,7 @@ export function PromptView() {
           imageUrl: imageUrl.trim() || undefined,
           temperature: tempValue,
           isFavorite: false,
+          type,
         })
         dispatch({ type: 'ADD', prompt: created })
         dispatch({ type: 'SELECT', id: created.id })
@@ -259,6 +262,7 @@ export function PromptView() {
       setNotes(prompt?.notes ?? '')
       setModel(prompt?.model ?? '')
       setImageUrl(prompt?.imageUrl ?? '')
+      setType(prompt?.type ?? 'text')
       setTemperature(prompt?.temperature !== undefined ? String(prompt.temperature) : '')
       setErrors({})
       setIsEditing(false)
@@ -367,6 +371,13 @@ export function PromptView() {
               </div>
             )}
 
+            {/* Image preview — image-type prompts only */}
+            {p.type === 'image' && p.imageUrl && (
+              <div>
+                <img src={p.imageUrl} alt={p.title} className="w-full h-auto rounded-lg" />
+              </div>
+            )}
+
             {/* Copy CTA — above content */}
             <div className="flex justify-end">
               <Button variant="secondary" onClick={handleCopy}>
@@ -459,6 +470,35 @@ export function PromptView() {
                   className="w-full rounded-md border border-border bg-surface px-3 py-1.5 text-sm text-text-heading focus:border-primary focus:outline-none resize-y"
                   placeholder="Short description (optional)"
                 />
+              </div>
+
+              {/* Type selector */}
+              <div>
+                <label className="block text-sm font-medium text-text-heading mb-1">Type</label>
+                <div className="flex gap-3">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="prompt-type"
+                      value="text"
+                      checked={type === 'text'}
+                      onChange={() => setType('text')}
+                      className="accent-primary"
+                    />
+                    <span className="text-sm text-text-heading">Text</span>
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="prompt-type"
+                      value="image"
+                      checked={type === 'image'}
+                      onChange={() => setType('image')}
+                      className="accent-primary"
+                    />
+                    <span className="text-sm text-text-heading">Image</span>
+                  </label>
+                </div>
               </div>
 
               {/* Image URL */}

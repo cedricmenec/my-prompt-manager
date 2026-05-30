@@ -19,6 +19,7 @@ const validPrompt = {
   content: 'Hello',
   tags: [],
   isFavorite: false,
+  type: 'text',
   createdAt: now,
   updatedAt: now,
 }

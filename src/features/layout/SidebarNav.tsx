@@ -4,7 +4,7 @@ import type { PromptFilter } from '@/features/prompts/PromptsContext'
 import { SettingsPanel } from '@/features/settings/SettingsPanel'
 
 export function SidebarNav() {
-  const { state, dispatch, activeFilter, setActiveFilter } = usePrompts()
+  const { state, dispatch, activeFilter, setActiveFilter, appView, setAppView } = usePrompts()
   const [settingsPanelOpen, setSettingsPanelOpen] = useState(false)
 
   // Compute uncollected count (prompts with no tags)
@@ -25,6 +25,9 @@ export function SidebarNav() {
 
   // Determine whether a nav item is currently active
   function isActive(id: string): boolean {
+    if (id === 'gallery') return appView === 'gallery'
+    // Other nav links are only active when in 'prompts' view
+    if (appView === 'gallery') return false
     if (id === 'all-prompts') return activeFilter.type === 'all'
     if (id === 'favorites') return activeFilter.type === 'favorites'
     if (id === 'uncollected') return activeFilter.type === 'uncollected'
@@ -81,7 +84,7 @@ export function SidebarNav() {
 
       {/* 2.4 Primary nav links */}
       <nav className="flex flex-col gap-0.5 px-3" aria-label="Primary navigation">
-        <button className={navLinkClass('all-prompts')} onClick={() => setActiveFilter({ type: 'all' })}>
+        <button className={navLinkClass('all-prompts')} onClick={() => { setAppView('prompts'); setActiveFilter({ type: 'all' }) }}>
           <svg
             className="size-4 shrink-0"
             viewBox="0 0 24 24"
@@ -95,7 +98,7 @@ export function SidebarNav() {
           All Prompts
         </button>
 
-        <button className={navLinkClass('favorites')} onClick={() => setActiveFilter({ type: 'favorites' })}>
+        <button className={navLinkClass('favorites')} onClick={() => { setAppView('prompts'); setActiveFilter({ type: 'favorites' }) }}>
           <svg
             className="size-4 shrink-0"
             viewBox="0 0 24 24"
@@ -116,7 +119,7 @@ export function SidebarNav() {
         {/* Uncollected with badge */}
         <button
           className={navLinkClass('uncollected')}
-          onClick={() => setActiveFilter({ type: 'uncollected' })}
+          onClick={() => { setAppView('prompts'); setActiveFilter({ type: 'uncollected' }) }}
         >
           <svg
             className="size-4 shrink-0"
@@ -138,6 +141,31 @@ export function SidebarNav() {
               {uncollectedCount}
             </span>
           )}
+        </button>
+
+        {/* Separator */}
+        <div className="my-1 border-t border-border" />
+
+        {/* Gallery */}
+        <button
+          className={navLinkClass('gallery')}
+          onClick={() => setAppView('gallery')}
+        >
+          <svg
+            className="size-4 shrink-0"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth={2}
+            aria-hidden="true"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M2.25 15.75l5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 0 0 1.5-1.5V6a1.5 1.5 0 0 0-1.5-1.5H3.75A1.5 1.5 0 0 0 2.25 6v12a1.5 1.5 0 0 0 1.5 1.5Zm10.5-11.25h.008v.008h-.008V8.25Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z"
+            />
+          </svg>
+          Gallery
         </button>
       </nav>
 
@@ -172,7 +200,7 @@ export function SidebarNav() {
             <button
               key={tag}
               className={navLinkClass(`col:${tag}`)}
-              onClick={() => setActiveFilter({ type: 'tag', value: tag })}
+              onClick={() => { setAppView('prompts'); setActiveFilter({ type: 'tag', value: tag }) }}
             >
               <svg
                 className="size-4 shrink-0"
