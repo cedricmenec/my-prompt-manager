@@ -81,11 +81,15 @@ In read mode, `PromptView` SHALL display the prompt fields in order:
 ---
 
 ### Requirement: PromptView edit mode provides an inline form
-When the user clicks "Edit", `PromptView` SHALL switch to edit mode in place. Edit mode SHALL render editable fields for all prompt properties using the same field set as the retired `PromptEditor`: `title`, `content`, `description`, `tags`, `notes`, `model`, `temperature`. The action bar SHALL show "Save" and "Cancel" in place of the default actions.
+When the user clicks "Edit", `PromptView` SHALL switch to edit mode in place. Edit mode SHALL render editable fields for all prompt properties: `title`, `content`, `description`, `tags`, `notes`, `model`, `temperature`. The `description` field SHALL be a multiline `<textarea>` (minimum 3 visible rows). The action bar SHALL show "Save" and "Cancel" in place of the default actions.
 
 #### Scenario: Edit mode shows all form fields
 - **WHEN** the user clicks "Edit"
-- **THEN** all seven fields are rendered as interactive inputs pre-filled with current values
+- **THEN** all seven fields are rendered as interactive inputs pre-filled with current values, with `description` rendered as a multiline textarea
+
+#### Scenario: Description textarea accepts multiline input
+- **WHEN** the user types a multi-paragraph description in the description textarea
+- **THEN** the text wraps across multiple lines and is persisted as-is
 
 #### Scenario: Save persists changes and returns to read mode
 - **WHEN** the user submits the edit form with valid data
@@ -98,8 +102,6 @@ When the user clicks "Edit", `PromptView` SHALL switch to edit mode in place. Ed
 #### Scenario: Validation error prevents save
 - **WHEN** the user clears the required `title` or `content` field and clicks "Save"
 - **THEN** an inline validation error is shown and the form is not submitted
-
----
 
 ### Requirement: Creating a new prompt navigates to PromptView in edit mode
 When the user triggers "New Prompt" (from sidebar or top bar), the system SHALL navigate directly to `PromptView` in edit mode with all fields empty, rather than opening a modal.
