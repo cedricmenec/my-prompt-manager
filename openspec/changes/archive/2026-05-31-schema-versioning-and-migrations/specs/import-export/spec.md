@@ -1,9 +1,15 @@
-# Import/Export
+## MODIFIED Requirements
 
-## Purpose
+### Requirement: Import result types
+The system SHALL export the following TypeScript types from `importExport.ts`:
+- `ImportParseResult`: `{ valid: Prompt[]; errors: ImportValidationError[]; migrationWarning?: string }`
+- `ImportValidationError`: `{ index: number; reason: string }`
+- `ImportFormatError`: typed `Error` subclass with `name: "ImportFormatError"`
 
-Provides JSON-based manual import and export of the prompt library — enabling backup, restore, and cross-device migration without a backend.
-## Requirements
+#### Scenario: Import result types are exported
+- **WHEN** `importExport.ts` is imported
+- **THEN** `ImportParseResult`, `ImportValidationError`, and `ImportFormatError` are available as named exports
+
 ### Requirement: Export prompts to JSON file
 The system SHALL provide an `exportPromptsToJson(prompts: Prompt[]): void` function that:
 - Serialises all prompts into a JSON object with the envelope `{ exportedAt, appVersion, schemaVersion, promptCount, prompts }`
@@ -65,15 +71,7 @@ The system SHALL provide a `parseImportFile(file: File): Promise<ImportParseResu
 
 ---
 
-### Requirement: Import result types
-The system SHALL export the following TypeScript types from `importExport.ts`:
-- `ImportParseResult`: `{ valid: Prompt[]; errors: ImportValidationError[]; migrationWarning?: string }`
-- `ImportValidationError`: `{ index: number; reason: string }`
-- `ImportFormatError`: typed `Error` subclass with `name: "ImportFormatError"`
-
-#### Scenario: Import result types are exported
-- **WHEN** `importExport.ts` is imported
-- **THEN** `ImportParseResult`, `ImportValidationError`, and `ImportFormatError` are available as named exports
+## ADDED Requirements
 
 ### Requirement: Import transformers registry
 The system SHALL define in `src/infrastructure/importExport.ts` a `importTransformers` record mapping schema version numbers to transformer functions `(prompts: unknown[]) => unknown[]`. Each transformer converts data from the previous version to the target version. The registry MAY be empty if no transformations are defined yet.
@@ -89,4 +87,3 @@ The system SHALL export an updated `ImportParseResult` type:
 #### Scenario: migrationWarning is undefined when no migration occurred
 - **WHEN** the imported file has the same `schemaVersion` as `DATA_SCHEMA_VERSION`
 - **THEN** `result.migrationWarning` is `undefined`
-

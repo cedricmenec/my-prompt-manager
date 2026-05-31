@@ -1,5 +1,6 @@
 import { PromptSchema } from '@/domain/promptSchema'
 import type { Prompt } from '@/domain/promptSchema'
+import { DATA_SCHEMA_VERSION } from './dataMigrations'
 
 // ---------------------------------------------------------------------------
 // Error types
@@ -24,6 +25,7 @@ export interface ImportValidationError {
 export interface ImportParseResult {
   valid: Prompt[]
   errors: ImportValidationError[]
+  migrationWarning?: string
 }
 
 // ---------------------------------------------------------------------------
@@ -32,7 +34,8 @@ export interface ImportParseResult {
 
 interface ExportEnvelope {
   exportedAt: string
-  schema: string
+  appVersion: string
+  schemaVersion: number
   promptCount: number
   prompts: unknown[]
 }
@@ -41,7 +44,8 @@ export function exportPromptsToJson(prompts: Prompt[]): void {
   const exportedAt = new Date().toISOString()
   const envelope: ExportEnvelope = {
     exportedAt,
-    schema: 'v1',
+    appVersion: import.meta.env.VITE_APP_VERSION,
+    schemaVersion: DATA_SCHEMA_VERSION,
     promptCount: prompts.length,
     prompts,
   }
@@ -59,6 +63,31 @@ export function exportPromptsToJson(prompts: Prompt[]): void {
 }
 
 // ---------------------------------------------------------------------------
+// Import — transformers registry
+// ---------------------------------------------------------------------------
+
+/**
+ * Maps target schema version N to a function that transforms raw prompts
+ * from version N-1 to version N. Add entries here when introducing new migrations.
+ */
+export const importTransformers: Record<number, (prompts: unknown[]) => unknown[]> = {}
+
+function migrateImportedPrompts(
+  prompts: unknown[],
+  fromVersion: number,
+  toVersion: number,
+): unknown[] {
+  let current = prompts
+  for (let v = fromVersion + 1; v <= toVersion; v++) {
+    const transformer = importTransformers[v]
+    if (transformer) {
+      current = transformer(current)
+    }
+  }
+  return current
+}
+
+// ---------------------------------------------------------------------------
 // Import
 // ---------------------------------------------------------------------------
 
@@ -72,24 +101,49 @@ export async function parseImportFile(file: File): Promise<ImportParseResult> {
     throw new ImportFormatError('Invalid JSON file. Please check the file and try again.')
   }
 
-  if (
-    typeof parsed !== 'object' ||
-    parsed === null ||
-    (parsed as ExportEnvelope).schema !== 'v1'
-  ) {
+  if (typeof parsed !== 'object' || parsed === null) {
     throw new ImportFormatError(
-      'Unrecognised file format. Expected a Prompt Vault export file (schema "v1").',
+      'Unrecognised file format. Expected a Prompt Vault export file.',
     )
   }
 
-  const envelope = parsed as ExportEnvelope
-  const rawPrompts = Array.isArray(envelope.prompts) ? envelope.prompts : []
+  const raw = parsed as Record<string, unknown>
+
+  // Resolve schemaVersion: explicit field takes priority; legacy "v1" schema field maps to 1
+  let fileSchemaVersion: number
+  if (typeof raw.schemaVersion === 'number') {
+    fileSchemaVersion = raw.schemaVersion
+  } else if (raw.schema === 'v1') {
+    fileSchemaVersion = 1
+  } else {
+    throw new ImportFormatError(
+      'Unrecognised file format. Expected a Prompt Vault export file.',
+    )
+  }
+
+  if (fileSchemaVersion > DATA_SCHEMA_VERSION) {
+    throw new ImportFormatError(
+      `This export file was created with a newer version of the app (schema version ${fileSchemaVersion}). ` +
+        `Please update the app to import this file.`,
+    )
+  }
+
+  const rawPrompts = Array.isArray(raw.prompts) ? (raw.prompts as unknown[]) : []
+
+  let migrationWarning: string | undefined
+  let migratedPrompts = rawPrompts
+  if (fileSchemaVersion < DATA_SCHEMA_VERSION) {
+    migratedPrompts = migrateImportedPrompts(rawPrompts, fileSchemaVersion, DATA_SCHEMA_VERSION)
+    migrationWarning =
+      `This file was created with an older schema (version ${fileSchemaVersion}). ` +
+      `It has been automatically migrated to the current version (${DATA_SCHEMA_VERSION}).`
+  }
 
   const valid: Prompt[] = []
   const errors: ImportValidationError[] = []
 
-  for (let i = 0; i < rawPrompts.length; i++) {
-    const result = PromptSchema.safeParse(rawPrompts[i])
+  for (let i = 0; i < migratedPrompts.length; i++) {
+    const result = PromptSchema.safeParse(migratedPrompts[i])
     if (result.success) {
       valid.push(result.data)
     } else {
@@ -100,5 +154,6 @@ export async function parseImportFile(file: File): Promise<ImportParseResult> {
     }
   }
 
-  return { valid, errors }
+  return { valid, errors, ...(migrationWarning !== undefined ? { migrationWarning } : {}) }
 }
+

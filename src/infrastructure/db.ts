@@ -1,7 +1,8 @@
 import { openDB, type IDBPDatabase } from 'idb'
 import type { Prompt } from '@/domain/promptSchema'
+import { runDataMigrations } from './dataMigrations'
 
-interface PromptDB {
+export interface PromptDB {
   prompts: {
     key: string
     value: Prompt
@@ -11,14 +12,18 @@ interface PromptDB {
       'by-favorite': boolean
     }
   }
+  _meta: {
+    key: string
+    value: { key: string; value: string | number }
+  }
 }
 
 const DB_NAME = 'byo-prompt-manager'
-const DB_VERSION = 2
+export const DB_VERSION = 3
 
 let dbPromise: Promise<IDBPDatabase<PromptDB>> | null = null
 
-export function getDb(): Promise<IDBPDatabase<PromptDB>> {
+export function initDb(): Promise<IDBPDatabase<PromptDB>> {
   if (!dbPromise) {
     dbPromise = openDB<PromptDB>(DB_NAME, DB_VERSION, {
       upgrade(db, oldVersion, _newVersion, transaction) {
@@ -31,13 +36,25 @@ export function getDb(): Promise<IDBPDatabase<PromptDB>> {
           const store = transaction.objectStore('prompts')
           store.createIndex('by-favorite', 'isFavorite')
         }
+        if (oldVersion < 3) {
+          db.createObjectStore('_meta', { keyPath: 'key' })
+        }
       },
+    }).then(async (db) => {
+      await runDataMigrations(db)
+      await db.put('_meta', { key: 'appVersion', value: import.meta.env.VITE_APP_VERSION })
+      return db
     })
   }
   return dbPromise
+}
+
+export function getDb(): Promise<IDBPDatabase<PromptDB>> {
+  return initDb()
 }
 
 /** Reset the singleton (used in tests). */
 export function resetDb(): void {
   dbPromise = null
 }
+

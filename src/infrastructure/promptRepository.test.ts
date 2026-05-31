@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach } from 'vitest'
 import 'fake-indexeddb/auto' // sets up all IDB class globals
 import { IDBFactory } from 'fake-indexeddb'
 import { promptRepository, PromptNotFoundError } from './promptRepository'
-import { resetDb } from './db'
+import { initDb, resetDb } from './db'
 
 const baseData = {
   title: 'Test Prompt',
@@ -122,5 +122,23 @@ describe('promptRepository.deleteAll', () => {
 
   it('is a no-op on an empty store', async () => {
     await expect(promptRepository.deleteAll()).resolves.toBeUndefined()
+  })
+})
+
+describe('DB_VERSION and _meta store', () => {
+  it('DB_VERSION is 3', async () => {
+    const { DB_VERSION } = await import('./db')
+    expect(DB_VERSION).toBe(3)
+  })
+
+  it('_meta store exists after initDb()', async () => {
+    const db = await initDb()
+    expect(db.objectStoreNames.contains('_meta')).toBe(true)
+  })
+
+  it('_meta contains schemaVersion after initDb()', async () => {
+    const db = await initDb()
+    const entry = await db.get('_meta', 'schemaVersion')
+    expect(typeof entry?.value).toBe('number')
   })
 })

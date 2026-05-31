@@ -10,6 +10,7 @@ import {
 import Fuse from 'fuse.js'
 import type { Prompt } from '@/domain/promptSchema'
 import { promptRepository } from '@/infrastructure/promptRepository'
+import { initDb } from '@/infrastructure/db'
 
 // ---------------------------------------------------------------------------
 // Filter type
@@ -159,8 +160,8 @@ export function PromptsProvider({ children }: { children: ReactNode }) {
 
 
   useEffect(() => {
-    promptRepository
-      .getAll()
+    initDb()
+      .then(() => promptRepository.getAll())
       .then((prompts) => dispatch({ type: 'LOAD', prompts }))
       .catch(console.error)
   }, [])
