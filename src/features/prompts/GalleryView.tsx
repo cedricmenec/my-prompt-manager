@@ -23,14 +23,16 @@ function GalleryCard({ prompt, onClick }: GalleryCardProps) {
     >
       {/* Image or placeholder */}
       {prompt.imageUrl && !imageError ? (
-        <img
-          src={prompt.imageUrl}
-          alt={prompt.title}
-          className="w-full h-auto block"
-          onError={() => setImageError(true)}
-        />
+        <div className="aspect-square overflow-hidden bg-zinc-950">
+          <img
+            src={prompt.imageUrl}
+            alt={prompt.title}
+            className="w-full h-full object-contain"
+            onError={() => setImageError(true)}
+          />
+        </div>
       ) : (
-        <div className="w-full aspect-video flex items-center justify-center bg-surface-muted">
+        <div className="w-full aspect-square flex items-center justify-center bg-surface-muted">
           {imageError ? (
             <span className="text-xs text-text opacity-60">Image unavailable</span>
           ) : (
@@ -60,6 +62,7 @@ function GalleryCard({ prompt, onClick }: GalleryCardProps) {
 
 export function GalleryView() {
   const { filteredPrompts, dispatch } = usePrompts()
+  const [cols, setCols] = useState<number>(4)
 
   const imagePrompts = filteredPrompts.filter((p) => p.type === 'image')
 
@@ -74,17 +77,39 @@ export function GalleryView() {
   }
 
   return (
-    <div className="px-4 py-4">
-      <ul className="columns-2 sm:columns-3 gap-3 space-y-3">
+    <div className="px-4 py-4 flex flex-col gap-3">
+      {/* Gallery header */}
+      <div className="flex items-center gap-3">
+        <span className="text-sm text-text opacity-70">{imagePrompts.length} images</span>
+        <div className="flex items-center gap-2 ml-auto">
+          <span className="text-xs text-text opacity-50" aria-label="zoom out">⊟</span>
+          <input
+            type="range"
+            min={2}
+            max={6}
+            step={1}
+            value={cols}
+            onChange={(e) => setCols(Number(e.target.value))}
+            aria-label="Number of columns"
+            className="w-24 accent-primary"
+          />
+          <span className="text-xs text-text opacity-50" aria-label="zoom in">⊞</span>
+        </div>
+      </div>
+
+      {/* Grid */}
+      <div
+        className="gap-2"
+        style={{ display: 'grid', gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))` }}
+      >
         {imagePrompts.map((prompt) => (
-          <li key={prompt.id} className="break-inside-avoid">
-            <GalleryCard
-              prompt={prompt}
-              onClick={() => dispatch({ type: 'SELECT', id: prompt.id })}
-            />
-          </li>
+          <GalleryCard
+            key={prompt.id}
+            prompt={prompt}
+            onClick={() => dispatch({ type: 'SELECT', id: prompt.id })}
+          />
         ))}
-      </ul>
+      </div>
     </div>
   )
 }

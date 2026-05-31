@@ -1,10 +1,4 @@
-# Image Gallery View
-
-## Purpose
-
-Defines the Gallery view: a CSS Grid layout for image-generation prompts, accessible from the sidebar, showing cards in a user-controlled column count (2–6, default 4) with square aspect-ratio cells using `object-contain` scaling and hover overlays.
-
-## Requirements
+## MODIFIED Requirements
 
 ### Requirement: Gallery view displays image-gen prompts in CSS Grid layout with zoom control
 The system SHALL provide a Gallery view that displays only prompts where `type === 'image'` in a CSS Grid layout. The number of columns SHALL be controlled by a zoom slider rendered in the gallery header. The slider SHALL support values from 2 to 6 columns (inclusive), with a default of 4 columns. The slider state SHALL be local to the Gallery view component (`useState`) and SHALL NOT be persisted across sessions. Each card cell SHALL use a square aspect ratio (`aspect-square`) with `object-contain` image scaling and a dark background (`zinc-950`) to provide a letterbox effect for non-square images. The Gallery view SHALL continue to reuse the active `activeFilter` and `searchQuery` from `PromptsContext` to filter the displayed set. When no image-type prompts match, an empty-state message SHALL be shown.
