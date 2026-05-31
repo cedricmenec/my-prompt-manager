@@ -29,6 +29,7 @@ export interface PromptsState {
   prompts: Prompt[]
   selectedPromptId: string | null
   viewMode: 'read' | 'edit' | null
+  initialType?: 'text' | 'image'
 }
 
 type Action =
@@ -38,7 +39,7 @@ type Action =
   | { type: 'REMOVE'; id: string }
   | { type: 'SELECT'; id: string | null }
   | { type: 'DESELECT' }
-  | { type: 'OPEN_CREATE' }
+  | { type: 'OPEN_CREATE'; initialType?: 'text' | 'image' }
   | { type: 'OPEN_EDIT' }
   | { type: 'CLOSE_EDITOR' }
 
@@ -82,14 +83,23 @@ function promptsReducer(state: PromptsState, action: Action): PromptsState {
     case 'DESELECT':
       return { ...state, selectedPromptId: null, viewMode: null }
 
-    case 'OPEN_CREATE':
-      return { ...state, selectedPromptId: null, viewMode: 'edit' }
+    case 'OPEN_CREATE': {
+      const { initialType: _prev, ...rest } = state
+      return {
+        ...rest,
+        selectedPromptId: null,
+        viewMode: 'edit',
+        ...(action.initialType !== undefined ? { initialType: action.initialType } : {}),
+      }
+    }
 
     case 'OPEN_EDIT':
       return { ...state, viewMode: 'edit' }
 
-    case 'CLOSE_EDITOR':
-      return { ...state, viewMode: null }
+    case 'CLOSE_EDITOR': {
+      const { initialType: _discarded, ...rest } = state
+      return { ...rest, viewMode: null }
+    }
 
     default:
       return state
@@ -127,9 +137,17 @@ export function PromptsProvider({ children }: { children: ReactNode }) {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>(
     () => (localStorage.getItem('promptViewMode') as 'grid' | 'list') ?? 'grid',
   )
-  const [appView, setAppView] = useState<'prompts' | 'gallery'>(
+  const [appView, setAppViewRaw] = useState<'prompts' | 'gallery'>(
     () => (localStorage.getItem('promptAppView') as 'prompts' | 'gallery') ?? 'prompts',
   )
+
+  const setAppView = (view: 'prompts' | 'gallery') => {
+    if (view === 'gallery') {
+      setActiveFilter({ type: 'all' })
+      setSearchQuery('')
+    }
+    setAppViewRaw(view)
+  }
 
   useEffect(() => {
     localStorage.setItem('promptViewMode', viewMode)
@@ -138,6 +156,7 @@ export function PromptsProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     localStorage.setItem('promptAppView', appView)
   }, [appView])
+
 
   useEffect(() => {
     promptRepository

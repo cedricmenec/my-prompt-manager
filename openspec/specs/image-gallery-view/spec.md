@@ -33,9 +33,9 @@ The system SHALL provide a Gallery view accessible from the sidebar that display
 - **WHEN** the user hovers over a gallery card
 - **THEN** an overlay appears showing the prompt title and tags over a gradient background
 
-#### Scenario: Clicking a gallery card opens PromptView
+#### Scenario: Clicking a gallery card opens ImagePromptView
 - **WHEN** the user clicks a gallery card
-- **THEN** `PromptView` opens for that prompt, replacing the gallery view
+- **THEN** `ImagePromptView` is rendered for that prompt (not `PromptView`)
 
 #### Scenario: Gallery card with broken imageUrl shows fallback
 - **WHEN** an image-type prompt has an `imageUrl` that fails to load

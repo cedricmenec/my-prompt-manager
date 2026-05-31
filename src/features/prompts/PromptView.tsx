@@ -128,7 +128,7 @@ export function PromptView() {
   const [notes, setNotes] = useState(prompt?.notes ?? '')
   const [model, setModel] = useState(prompt?.model ?? '')
   const [imageUrl, setImageUrl] = useState(prompt?.imageUrl ?? '')
-  const [type, setType] = useState<'text' | 'image'>(prompt?.type ?? 'text')
+  const [type, setType] = useState<'text' | 'image'>(prompt?.type ?? state.initialType ?? 'text')
   const [temperature, setTemperature] = useState<string>(
     prompt?.temperature !== undefined ? String(prompt.temperature) : '',
   )

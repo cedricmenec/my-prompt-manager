@@ -12,7 +12,12 @@ export function TopAppBar() {
   }, [debouncedQuery, setSearchQuery])
 
   return (
-    <div className="sticky top-0 z-10 flex flex-col gap-2 border-b border-border bg-surface px-4 py-3">
+    <div className={[
+      'sticky top-0 z-10 flex flex-col gap-2 border-b px-4 py-3',
+      appView === 'gallery'
+        ? 'border-border/40 bg-transparent'
+        : 'border-border bg-surface',
+    ].join(' ')}>
       {/* Search input with search icon */}
       <div className="relative">
         <svg
@@ -31,10 +36,15 @@ export function TopAppBar() {
         </svg>
         <input
           type="search"
-          placeholder="Search prompts..."
+          placeholder={appView === 'gallery' ? 'Search images...' : 'Search prompts...'}
           value={inputValue}
           onChange={(e) => setInputValue(e.target.value)}
-          className="w-full rounded-lg border border-border bg-surface-muted py-2 pl-9 pr-4 text-sm text-text-heading placeholder:text-text focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+          className={[
+            'w-full rounded-lg border py-2 pl-9 pr-4 text-sm text-text-heading placeholder:text-text focus:outline-none focus:ring-1',
+            appView === 'gallery'
+              ? 'border-border/40 bg-transparent focus:border-primary/50 focus:ring-primary/50'
+              : 'border-border bg-surface-muted focus:border-primary focus:ring-primary',
+          ].join(' ')}
         />
       </div>
 

@@ -1,10 +1,4 @@
-# Sidebar Navigation
-
-## Purpose
-
-Defines the fixed left sidebar component: mode-aware navigation links, collections derived from prompt tags, and footer actions. The brand header (logo + app name) is now in `GlobalTopBar`.
-
-## Requirements
+## MODIFIED Requirements
 
 ### Requirement: Sidebar is mode-aware and renders content based on active navigation mode
 The system SHALL render a fixed-position left sidebar of exactly 260px width. The sidebar SHALL NOT contain the brand header / logo (moved to `GlobalTopBar`). Instead the sidebar SHALL directly render the "+ New Prompt" CTA button and navigation links appropriate for the current `appView` mode. The footer area SHALL retain the Settings button (non-functional dark mode toggle may remain or be removed in this change).
@@ -16,8 +10,6 @@ The system SHALL render a fixed-position left sidebar of exactly 260px width. Th
 #### Scenario: Sidebar is always visible
 - **WHEN** the user scrolls down in the main content area
 - **THEN** the sidebar remains fixed on the left side of the viewport
-
----
 
 ### Requirement: Sidebar in Prompts mode renders standard navigation links
 When `appView === 'prompts'`, the sidebar SHALL display the following primary navigation links: "All Prompts", "Favorites", "Uncollected" (with count badge), and a Collections section derived from all prompt tags. There SHALL be no "Gallery" link — mode switching is handled by the `GlobalTopBar`. The "+ New Prompt" CTA SHALL dispatch `OPEN_CREATE` with `initialType: 'text'` (or no type, defaulting to text).
@@ -38,8 +30,6 @@ When `appView === 'prompts'`, the sidebar SHALL display the following primary na
 - **WHEN** `appView` is `'prompts'` and prompts exist with tags "ai" (3) and "image" (5)
 - **THEN** the Collections section shows "ai (3)" and "image (5)" regardless of prompt type
 
----
-
 ### Requirement: Sidebar in Gallery mode renders gallery-specific navigation
 When `appView === 'gallery'`, the sidebar SHALL display: "All Images" link (sets `activeFilter` to `{ type: 'all' }`), "Favorites" link (sets `activeFilter` to `{ type: 'favorites' }`), and a Collections section derived only from prompts with `type === 'image'`. The "Uncollected" link SHALL NOT be shown in gallery mode. The "+ New Image Prompt" CTA SHALL dispatch `OPEN_CREATE` with `initialType: 'image'`.
 
@@ -59,32 +49,8 @@ When `appView === 'gallery'`, the sidebar SHALL display: "All Images" link (sets
 - **WHEN** `appView` is `'gallery'`
 - **THEN** the sidebar CTA button is labelled "+ New Image Prompt" and clicking it opens the editor with `type: 'image'` pre-selected
 
----
+## REMOVED Requirements
 
-### Requirement: Sidebar Collections section
-The sidebar SHALL display a "Collections" section below the primary navigation. Collections SHALL be derived at runtime by grouping prompt tags according to the current mode (all tags in Prompts mode; only tags from image-type prompts in Gallery mode). Each collection item SHALL show the tag name and the count of prompts that carry that tag. A "New Collection" icon button SHALL be present in the section header (action deferred; button is rendered but non-functional in this change). Clicking a collection SHALL update the `activeFilter` in `PromptsContext` to filter by that specific tag.
-
-#### Scenario: Collections are derived from prompt tags
-- **WHEN** prompts exist with tags "ai" (3 prompts) and "dev" (5 prompts) in Prompts mode
-- **THEN** the Collections section shows "ai (3)" and "dev (5)"
-
-#### Scenario: No collections shown when no prompts have tags
-- **WHEN** all prompts have empty tag arrays
-- **THEN** the Collections section shows no items (or an empty-state hint)
-
-#### Scenario: Clicking a collection sets it as active
-- **WHEN** the user clicks a collection item
-- **THEN** the item receives a visual active state
-
-#### Scenario: Clicking a collection tag filters the list
-- **WHEN** the user clicks a collection named "Work"
-- **THEN** only prompts containing the "Work" tag are displayed in the list
-
----
-
-### Requirement: Sidebar footer with dark mode toggle
-The sidebar SHALL include a footer area at the bottom with a "Dark Mode" toggle button. The button SHALL be rendered and visible. Theme switching is deferred; clicking the button has no functional effect in this change.
-
-#### Scenario: Dark mode toggle is rendered
-- **WHEN** the sidebar is rendered
-- **THEN** a "Dark Mode" button is visible at the bottom of the sidebar
+### Requirement: Sidebar primary navigation links (original — includes Gallery link)
+**Reason**: The "Gallery" navigation link is removed from the sidebar. Mode switching between Prompts and Gallery is now handled exclusively by the `GlobalTopBar` segmented control. The sidebar navigation items are split into mode-specific sets (see MODIFIED requirements above).
+**Migration**: Remove the "Gallery" `<button>` and its separator from `SidebarNav`. Mode switching calls `setAppView` which is now triggered from `GlobalTopBar` only.

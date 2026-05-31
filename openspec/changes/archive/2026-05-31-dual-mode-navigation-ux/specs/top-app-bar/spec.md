@@ -1,15 +1,7 @@
-# Top App Bar
+## MODIFIED Requirements
 
-## Purpose
-
-Defines the sticky top bar rendered inside the main content area (not spanning the sidebar): search input and filter/view toolbar.
-## Requirements
 ### Requirement: Sticky top app bar with search input — mode-aware appearance
 The system SHALL render a sticky contextual top bar inside the main content area (not spanning the sidebar). In **Prompts mode** (`appView === 'prompts'`), the top bar SHALL render with the existing full-width search input style (solid background, standard border). In **Gallery mode** (`appView === 'gallery'`), the top bar SHALL render with a **discrete style**: transparent or lightly tinted background, attenuated border, and a slightly smaller/muted search input. The search input SHALL remain functional in both modes. Typing SHALL update `searchQuery` in `PromptsContext` (debounced).
-
-#### Scenario: Top bar is sticky on scroll
-- **WHEN** the user scrolls down in the main content area
-- **THEN** the top bar remains visible at the top of the main content area
 
 #### Scenario: Top bar renders with full style in Prompts mode
 - **WHEN** `appView` is `'prompts'` and no prompt is selected
@@ -19,14 +11,6 @@ The system SHALL render a sticky contextual top bar inside the main content area
 - **WHEN** `appView` is `'gallery'`
 - **THEN** the top bar renders with a transparent or lightly tinted background and an attenuated border on the search input
 
-#### Scenario: Search input is rendered and functional
-- **WHEN** the top bar is rendered
-- **THEN** a search input field is visible with a search icon and placeholder text, and the field is editable (not read-only)
-
-#### Scenario: Typing in the search input filters the prompt list
-- **WHEN** the user types a query in the top bar search input
-- **THEN** the prompt list updates to show only prompts matching the query
-
 #### Scenario: Search input remains functional in Gallery mode
 - **WHEN** `appView` is `'gallery'` and the user types in the search input
 - **THEN** the gallery filters to show only image-type prompts matching the query
@@ -35,7 +19,7 @@ The system SHALL render a sticky contextual top bar inside the main content area
 - **WHEN** the user clears the search input in either mode
 - **THEN** all prompts (or all images in gallery mode) matching the active filter are displayed
 
----
+## MODIFIED Requirements
 
 ### Requirement: View toggle in top app bar — hidden in Gallery mode
 The top bar SHALL display the grid/list view-toggle buttons **only when `appView === 'prompts'`**. In Gallery mode, the view toggle SHALL NOT be rendered. The selected view mode (`grid` / `list`) SHALL continue to be persisted in `localStorage` under `promptViewMode` and restored on next load. The default mode remains `grid`.
@@ -59,8 +43,3 @@ The top bar SHALL display the grid/list view-toggle buttons **only when `appView
 #### Scenario: View mode persists across reloads
 - **WHEN** the user selects list view and then reloads the page
 - **THEN** the app opens in list view (in Prompts mode)
-
-#### Scenario: Filter buttons are absent
-- **WHEN** the top bar is rendered
-- **THEN** no "Tags", "Language", or "Favorites" filter buttons are present
-

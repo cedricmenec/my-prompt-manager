@@ -1,9 +1,5 @@
-# Main Layout Shell
+## MODIFIED Requirements
 
-## Purpose
-
-Defines the root application layout shell that composes the sidebar navigation, top app bar, and scrollable content canvas into a cohesive full-viewport layout.
-## Requirements
 ### Requirement: Main layout shell composes GlobalTopBar, sidebar, and content canvas
 The system SHALL provide a `MainLayoutShell` component that renders a `GlobalTopBar` spanning the full viewport width at the very top, then below it: `SidebarNav` on the left and a main region on the right. The `TopAppBar` (contextual search bar) SHALL be rendered inside the main region above the content canvas only when no prompt detail is active. When `PromptView` or `ImagePromptView` is active, the contextual `TopAppBar` SHALL be hidden and the detail view SHALL occupy the full main region. The `hideTopBar` prop is removed — visibility of the contextual top bar is determined by the active view, not by a prop. The shell SHALL occupy the full viewport height without overflow on the body.
 
@@ -27,3 +23,8 @@ The system SHALL provide a `MainLayoutShell` component that renders a `GlobalTop
 - **WHEN** the user scrolls the content canvas
 - **THEN** the sidebar remains in place while only the content scrolls
 
+## REMOVED Requirements
+
+### Requirement: App.tsx delegates layout to MainLayoutShell
+**Reason**: The `hideTopBar` prop pattern is replaced — `App.tsx` no longer passes a prop to control top bar visibility; the contextual bar visibility is determined by the active view state inside the shell or App.
+**Migration**: Remove `hideTopBar` prop usage from `App.tsx`. Visibility of the contextual `TopAppBar` is now driven by `selectedPromptId` and `viewMode` read directly from `PromptsContext` inside the shell or App.
