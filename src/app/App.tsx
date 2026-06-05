@@ -8,7 +8,9 @@ export function App() {
   const { state, appView } = usePrompts()
 
   let content
-  if (state.selectedPromptId !== null && appView === 'gallery') {
+  if (state.selectedPromptId !== null && state.viewMode === 'edit') {
+    content = <PromptView />
+  } else if (state.selectedPromptId !== null && appView === 'gallery') {
     content = <ImagePromptView />
   } else if (state.selectedPromptId !== null || state.viewMode === 'edit') {
     content = <PromptView />

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { usePrompts } from './PromptsContext'
 import { Badge } from '@/shared/ui/Badge'
 import { usePromptImageSource } from './usePromptImageSource'
@@ -11,6 +11,16 @@ export function ImagePromptView() {
     ? state.prompts.find((p) => p.id === state.selectedPromptId)
     : undefined
   const image = usePromptImageSource(prompt)
+
+  useEffect(() => {
+    function handleKeyDown(e: globalThis.KeyboardEvent) {
+      if (e.key === 'Escape') {
+        dispatch({ type: 'DESELECT' })
+      }
+    }
+    document.addEventListener('keydown', handleKeyDown)
+    return () => document.removeEventListener('keydown', handleKeyDown)
+  }, [dispatch])
 
   if (!prompt) return null
 
