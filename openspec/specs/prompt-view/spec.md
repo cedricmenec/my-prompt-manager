@@ -21,7 +21,7 @@ In read mode, `PromptView` SHALL display the prompt fields in order:
 1. `title` as an `h1` heading
 2. `tags` as badge chips (if any)
 3. `description` as a subtitle/lead paragraph (if present)
-4. For prompts with `type === 'image'` and a valid `imageUrl`: the image rendered full-width at its natural aspect ratio (`w-full h-auto`), inside a rounded container, above the Copy CTA
+4. For prompts with `type === 'image'` and a resolvable local `imageAssetId` or valid `imageUrl`: the image rendered full-width at its natural aspect ratio (`w-full h-auto`), inside a rounded container, above the Copy CTA, preferring the local asset over the remote URL
 5. `content` rendered as Markdown inside a terminal/code-block style enclosure
 6. `notes` as plain free-text below the content block (if present), in a visually distinct "Notes" section
 
@@ -41,12 +41,21 @@ In read mode, `PromptView` SHALL display the prompt fields in order:
 - **WHEN** `PromptView` is in read mode for a prompt with `type === 'image'` and a valid `imageUrl`
 - **THEN** the image is rendered full-width at its natural aspect ratio above the Copy CTA
 
+#### Scenario: Local asset preview is shown before imageUrl
+- **WHEN** `PromptView` is in read mode for an image prompt with both `imageAssetId` and `imageUrl`
+- **THEN** the image preview renders the local asset
+- **AND** does not load the remote `imageUrl`
+
+#### Scenario: Missing local asset falls back to imageUrl
+- **WHEN** `PromptView` is in read mode for an image prompt whose `imageAssetId` cannot be resolved and whose `imageUrl` is valid
+- **THEN** the image preview renders the remote URL fallback
+
 #### Scenario: Image preview is hidden for text-type prompt
 - **WHEN** `PromptView` is in read mode for a prompt with `type === 'text'`
 - **THEN** no image preview section is rendered, even if `imageUrl` is set
 
-#### Scenario: Image preview is hidden when imageUrl is absent
-- **WHEN** `PromptView` is in read mode for a prompt with `type === 'image'` but no `imageUrl`
+#### Scenario: Image preview is hidden when no image reference is available
+- **WHEN** `PromptView` is in read mode for a prompt with `type === 'image'` but no local asset or `imageUrl`
 - **THEN** no image preview section is rendered
 
 ---
@@ -94,11 +103,20 @@ In read mode, `PromptView` SHALL display the prompt fields in order:
 ---
 
 ### Requirement: PromptView edit mode provides an inline form
-When the user clicks "Edit", `PromptView` SHALL switch to edit mode in place. Edit mode SHALL render editable fields for all prompt properties: `title`, `content`, `description`, `tags`, `notes`, `model`, `temperature`, `imageUrl`. The `description` field SHALL be a multiline `<textarea>` (minimum 3 visible rows). The `imageUrl` field SHALL be a text input for the reference image URL. The action bar SHALL show "Save" and "Cancel" in place of the default actions.
+When the user clicks "Edit", `PromptView` SHALL switch to edit mode in place. Edit mode SHALL render editable fields for all prompt properties: `title`, `content`, `description`, `tags`, `notes`, `model`, `temperature`, `imageUrl`, and local image attachment state for image prompts. The `description` field SHALL be a multiline `<textarea>` (minimum 3 visible rows). The `imageUrl` field SHALL be a text input for the reference image URL. For image prompts, edit mode SHALL provide controls to attach, replace, and remove a local reference image asset through file picker upload, drag-and-drop upload, and public URL import-to-local. The action bar SHALL show "Save" and "Cancel" in place of the default actions.
 
 #### Scenario: Edit mode shows all form fields
 - **WHEN** the user clicks "Edit"
 - **THEN** all eight fields are rendered as interactive inputs pre-filled with current values, with `description` rendered as a multiline textarea and `imageUrl` as a text input
+
+#### Scenario: Edit mode shows local image attachment controls
+- **WHEN** the user edits an image prompt
+- **THEN** controls are available to upload/drop an image file and attach it as a local asset
+
+#### Scenario: Removing local image preserves optional imageUrl
+- **WHEN** the user removes the local image asset from a prompt that also has `imageUrl`
+- **THEN** `imageAssetId` is cleared
+- **AND** `imageUrl` remains unchanged unless the user explicitly edits it
 
 #### Scenario: Description textarea accepts multiline input
 - **WHEN** the user types a multi-paragraph description in the description textarea
@@ -126,4 +144,3 @@ When the user triggers "New Prompt" (from sidebar or top bar), the system SHALL 
 #### Scenario: Cancelling new prompt creation returns to list
 - **WHEN** the user clicks "Cancel" on a new (unsaved) prompt
 - **THEN** no prompt is created and the list view is restored
-

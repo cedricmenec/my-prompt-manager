@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { usePrompts } from './PromptsContext'
 import { Badge } from '@/shared/ui/Badge'
+import { usePromptImageSource } from './usePromptImageSource'
 
 export function ImagePromptView() {
   const { state, dispatch } = usePrompts()
@@ -9,6 +10,7 @@ export function ImagePromptView() {
   const prompt = state.selectedPromptId
     ? state.prompts.find((p) => p.id === state.selectedPromptId)
     : undefined
+  const image = usePromptImageSource(prompt)
 
   if (!prompt) return null
 
@@ -57,9 +59,9 @@ export function ImagePromptView() {
 
       {/* Image area */}
       <div className="flex items-center justify-center bg-surface-muted px-4 py-6">
-        {prompt.imageUrl && !imageError ? (
+        {image.src && !imageError ? (
           <img
-            src={prompt.imageUrl}
+            src={image.src}
             alt={prompt.title}
             className="max-h-[60vh] w-auto rounded-lg object-contain shadow-md"
             onError={() => setImageError(true)}

@@ -34,8 +34,12 @@ export function SettingsPanel({ onClose }: SettingsPanelProps) {
   // Export
   // ---------------------------------------------------------------------------
 
-  const handleExport = () => {
-    exportPromptsToJson(state.prompts)
+  const handleExport = async () => {
+    try {
+      await exportPromptsToJson(state.prompts)
+    } catch {
+      showToast('Export failed. Please try again.', 'error')
+    }
   }
 
   // ---------------------------------------------------------------------------
@@ -68,7 +72,7 @@ export function SettingsPanel({ onClose }: SettingsPanelProps) {
     setIsImporting(true)
     try {
       await promptRepository.deleteAll()
-      await promptRepository.bulkImport(importResult.valid)
+      await promptRepository.bulkImportWithAssets(importResult.valid, importResult.imageAssets)
       const reloaded = await promptRepository.getAll()
       dispatch({ type: 'LOAD', prompts: reloaded })
       const skipped = importResult.errors.length

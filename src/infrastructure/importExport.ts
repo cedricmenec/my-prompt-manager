@@ -1,6 +1,7 @@
 import { PromptSchema } from '@/domain/promptSchema'
-import type { Prompt } from '@/domain/promptSchema'
+import type { Prompt, PromptImageAsset } from '@/domain/promptSchema'
 import { DATA_SCHEMA_VERSION } from './dataMigrations'
+import { promptRepository } from './promptRepository'
 
 // ---------------------------------------------------------------------------
 // Error types
@@ -24,6 +25,7 @@ export interface ImportValidationError {
 
 export interface ImportParseResult {
   valid: Prompt[]
+  imageAssets: PromptImageAsset[]
   errors: ImportValidationError[]
   migrationWarning?: string
 }
@@ -38,16 +40,33 @@ interface ExportEnvelope {
   schemaVersion: number
   promptCount: number
   prompts: unknown[]
+  imageAssets?: ExportedImageAsset[]
 }
 
-export function exportPromptsToJson(prompts: Prompt[]): void {
+interface ExportedImageAsset {
+  id: string
+  promptId: string
+  mimeType: 'image/webp'
+  width: number
+  height: number
+  sizeBytes: number
+  source: 'upload' | 'remote-url'
+  originalName?: string
+  originalUrl?: string
+  createdAt: string
+  payloadBase64: string
+}
+
+export async function exportPromptsToJson(prompts: Prompt[]): Promise<void> {
   const exportedAt = new Date().toISOString()
+  const imageAssets = await collectExportableImageAssets(prompts)
   const envelope: ExportEnvelope = {
     exportedAt,
     appVersion: import.meta.env.VITE_APP_VERSION,
     schemaVersion: DATA_SCHEMA_VERSION,
     promptCount: prompts.length,
     prompts,
+    ...(imageAssets.length > 0 ? { imageAssets } : {}),
   }
   const json = JSON.stringify(envelope, null, 2)
   const blob = new Blob([json], { type: 'application/json' })
@@ -60,6 +79,31 @@ export function exportPromptsToJson(prompts: Prompt[]): void {
   a.click()
   document.body.removeChild(a)
   URL.revokeObjectURL(url)
+}
+
+async function collectExportableImageAssets(prompts: Prompt[]): Promise<ExportedImageAsset[]> {
+  const ids = [...new Set(prompts.map((prompt) => prompt.imageAssetId).filter((id): id is string => Boolean(id)))]
+  const exported: ExportedImageAsset[] = []
+
+  for (const id of ids) {
+    const asset = await promptRepository.getImageAssetById(id)
+    if (!asset) continue
+    exported.push({
+      id: asset.id,
+      promptId: asset.promptId,
+      mimeType: asset.mimeType,
+      width: asset.width,
+      height: asset.height,
+      sizeBytes: asset.sizeBytes,
+      source: asset.source,
+      ...(asset.originalName !== undefined ? { originalName: asset.originalName } : {}),
+      ...(asset.originalUrl !== undefined ? { originalUrl: asset.originalUrl } : {}),
+      createdAt: asset.createdAt,
+      payloadBase64: await blobToBase64(asset.blob),
+    })
+  }
+
+  return exported
 }
 
 // ---------------------------------------------------------------------------
@@ -140,6 +184,7 @@ export async function parseImportFile(file: File): Promise<ImportParseResult> {
   }
 
   const valid: Prompt[] = []
+  const imageAssets: PromptImageAsset[] = []
   const errors: ImportValidationError[] = []
 
   for (let i = 0; i < migratedPrompts.length; i++) {
@@ -154,6 +199,77 @@ export async function parseImportFile(file: File): Promise<ImportParseResult> {
     }
   }
 
-  return { valid, errors, ...(migrationWarning !== undefined ? { migrationWarning } : {}) }
+  const promptIds = new Set(valid.map((prompt) => prompt.id))
+  const rawAssets = Array.isArray(raw.imageAssets) ? raw.imageAssets : []
+  for (let i = 0; i < rawAssets.length; i++) {
+    try {
+      const asset = await parseExportedImageAsset(rawAssets[i], promptIds)
+      if (asset) {
+        imageAssets.push(asset)
+      }
+    } catch (error) {
+      errors.push({
+        index: i,
+        reason: error instanceof Error ? `Image asset: ${error.message}` : 'Image asset is invalid',
+      })
+    }
+  }
+
+  return { valid, imageAssets, errors, ...(migrationWarning !== undefined ? { migrationWarning } : {}) }
+}
+
+async function parseExportedImageAsset(
+  rawAsset: unknown,
+  promptIds: Set<string>,
+): Promise<PromptImageAsset | undefined> {
+  if (typeof rawAsset !== 'object' || rawAsset === null) {
+    throw new ImportFormatError('Asset record is not an object.')
+  }
+  const asset = rawAsset as Record<string, unknown>
+  if (asset.mimeType !== 'image/webp') {
+    throw new ImportFormatError('Only image/webp assets are supported.')
+  }
+  if (typeof asset.id !== 'string' || asset.id.length === 0) {
+    throw new ImportFormatError('Asset id is missing.')
+  }
+  if (typeof asset.promptId !== 'string' || !promptIds.has(asset.promptId)) {
+    return undefined
+  }
+  if (typeof asset.payloadBase64 !== 'string' || asset.payloadBase64.length === 0) {
+    throw new ImportFormatError('Asset payload is missing.')
+  }
+
+  const blob = base64ToBlob(asset.payloadBase64, asset.mimeType)
+  return {
+    id: asset.id,
+    promptId: asset.promptId,
+    blob,
+    mimeType: asset.mimeType,
+    width: typeof asset.width === 'number' ? asset.width : 1,
+    height: typeof asset.height === 'number' ? asset.height : 1,
+    sizeBytes: typeof asset.sizeBytes === 'number' ? asset.sizeBytes : blob.size,
+    source: asset.source === 'remote-url' ? 'remote-url' : 'upload',
+    ...(typeof asset.originalName === 'string' ? { originalName: asset.originalName } : {}),
+    ...(typeof asset.originalUrl === 'string' ? { originalUrl: asset.originalUrl } : {}),
+    createdAt: typeof asset.createdAt === 'string' ? asset.createdAt : new Date().toISOString(),
+  }
+}
+
+async function blobToBase64(blob: Blob): Promise<string> {
+  const buffer = await blob.arrayBuffer()
+  let binary = ''
+  for (const byte of new Uint8Array(buffer)) {
+    binary += String.fromCharCode(byte)
+  }
+  return btoa(binary)
+}
+
+function base64ToBlob(base64: string, mimeType: string): Blob {
+  const binary = atob(base64)
+  const bytes = new Uint8Array(binary.length)
+  for (let i = 0; i < binary.length; i++) {
+    bytes[i] = binary.charCodeAt(i)
+  }
+  return new Blob([bytes], { type: mimeType })
 }
 

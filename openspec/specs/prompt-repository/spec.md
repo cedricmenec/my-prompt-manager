@@ -2,15 +2,17 @@
 
 ## Purpose
 
-Defines the IndexedDB-backed persistence layer for prompts: database initialisation, and the full CRUD + bulk-import API.
+Defines the IndexedDB-backed persistence layer for prompts and local prompt image assets: database initialisation, prompt CRUD, image asset CRUD, cleanup, and bulk-import APIs.
 ## Requirements
 ### Requirement: IndexedDB database initialisation
-The system SHALL open (or create) an IndexedDB database named `byo-prompt-manager` at version `3` using the `idb` library. The database SHALL contain:
+The system SHALL open (or create) an IndexedDB database named `byo-prompt-manager` at version `4` using the `idb` library. The database SHALL contain:
 - An object store named `prompts` with `id` as the key path and indexes:
   - `by-updatedAt` on the `updatedAt` field
   - `by-tags` on the `tags` field with `multiEntry: true`
   - `by-favorite` on the `isFavorite` field
 - An object store named `_meta` with `key` as the key path, storing entries `{ key: string, value: string | number }`
+- An object store named `promptImageAssets` with `id` as the key path and an index:
+  - `by-promptId` on the `promptId` field
 
 The database SHALL no longer export `getDb()` directly as the primary initialisation entry point. Instead, consumers SHALL use `initDb()` from `db.ts` which orchestrates both structural migration (via `openDB`) and data migration (via `runDataMigrations`).
 
@@ -21,6 +23,15 @@ The database SHALL no longer export `getDb()` directly as the primary initialisa
 #### Scenario: Upgrade from version 2 creates _meta store
 - **WHEN** the app is opened with an existing DB at version 2
 - **THEN** the `_meta` store is added without loss of existing `prompts` data
+
+#### Scenario: Upgrade creates promptImageAssets store
+- **WHEN** the app opens an existing database from the previous version
+- **THEN** the `promptImageAssets` store is created
+- **AND** existing prompt records remain available
+
+#### Scenario: First-time initialization creates image asset store
+- **WHEN** the app opens with no existing IndexedDB data
+- **THEN** the database contains `prompts`, `_meta`, and `promptImageAssets`
 
 #### Scenario: Subsequent opens reuse the existing database
 - **WHEN** the app is reopened after data has been stored
@@ -87,7 +98,7 @@ The system SHALL provide a `promptRepository.update(id: string, data: Partial<Om
 ---
 
 ### Requirement: delete prompt
-The system SHALL provide a `promptRepository.delete(id: string): Promise<void>` method that removes the prompt from the store. If the id does not exist, the method SHALL resolve without error (idempotent).
+The system SHALL provide a `promptRepository.delete(id: string): Promise<void>` method that removes the prompt from the store and deletes local image assets owned by that prompt. If the id does not exist, the method SHALL resolve without error (idempotent).
 
 #### Scenario: Deleted prompt is no longer retrievable
 - **WHEN** `delete` is called with an existing prompt id
@@ -96,6 +107,10 @@ The system SHALL provide a `promptRepository.delete(id: string): Promise<void>` 
 #### Scenario: Deleting unknown id is a no-op
 - **WHEN** `delete` is called with an id not in the store
 - **THEN** the promise resolves without throwing
+
+#### Scenario: Deleting prompt deletes owned image assets
+- **WHEN** a prompt with local image assets is deleted
+- **THEN** its associated local image asset records are also deleted
 
 ---
 
@@ -107,7 +122,7 @@ The system SHALL provide a `promptRepository.bulkImport(prompts: Prompt[]): Prom
 - **THEN** `getAll` returns at least those 5 prompts
 
 ### Requirement: deleteAll prompts
-The system SHALL provide a `promptRepository.deleteAll(): Promise<void>` method that removes all prompts from the `prompts` object store in a single IndexedDB transaction.
+The system SHALL provide a `promptRepository.deleteAll(): Promise<void>` method that removes all prompts from the `prompts` object store and all local prompt image assets in a single IndexedDB transaction.
 
 #### Scenario: All prompts are removed after deleteAll
 - **WHEN** `deleteAll` is called on a store containing prompts
@@ -121,3 +136,32 @@ The system SHALL provide a `promptRepository.deleteAll(): Promise<void>` method 
 - **WHEN** `bulkImport` is called with 5 valid prompts
 - **THEN** `getAll` returns at least those 5 prompts
 
+---
+
+### Requirement: Repository persists and retrieves image assets as Blobs
+The repository layer SHALL expose typed operations to create, retrieve, list by prompt, and delete prompt image assets. Asset binary data SHALL be stored and returned as a `Blob`.
+
+#### Scenario: Created asset is retrievable
+- **WHEN** an optimized WebP image asset is stored
+- **THEN** retrieving it by ID returns its metadata and `Blob`
+
+#### Scenario: Assets can be listed by prompt
+- **WHEN** a prompt has one or more stored image asset records
+- **THEN** listing assets for the prompt ID returns those records
+
+#### Scenario: Missing asset returns undefined
+- **WHEN** the repository is asked for an unknown image asset ID
+- **THEN** it resolves with `undefined`
+
+---
+
+### Requirement: Repository prevents stale image assets from accumulating
+When a prompt's local image asset is replaced or removed, the repository SHALL delete the previously referenced asset if it is no longer referenced.
+
+#### Scenario: Replacing asset deletes old unreferenced asset
+- **WHEN** a prompt with an existing `imageAssetId` is updated to reference a different local asset
+- **THEN** the old asset is removed if no prompt references it
+
+#### Scenario: Removing local image deletes old asset
+- **WHEN** a prompt's `imageAssetId` is cleared
+- **THEN** the previously referenced local asset is removed if no prompt references it

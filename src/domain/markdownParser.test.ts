@@ -93,4 +93,19 @@ describe('serializeMarkdown', () => {
     expect(parsed.error).toBeNull()
     expect(parsed.data?.notes).toBe('Line one.\nLine two.\nLine three.')
   })
+
+  it('preserves imageUrl and omits local image binary payloads', () => {
+    const imagePrompt: Prompt = {
+      ...validPrompt,
+      type: 'image',
+      imageUrl: 'https://example.com/reference.png',
+      imageAssetId: 'asset-1',
+    }
+    const serialized = serializeMarkdown(imagePrompt)
+
+    expect(serialized).toContain('imageUrl: https://example.com/reference.png')
+    expect(serialized).toContain('imageAssetId: asset-1')
+    expect(serialized).not.toContain('payloadBase64')
+    expect(serialized).not.toContain('data:image/')
+  })
 })

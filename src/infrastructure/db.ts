@@ -1,5 +1,5 @@
 import { openDB, type IDBPDatabase } from 'idb'
-import type { Prompt } from '@/domain/promptSchema'
+import type { Prompt, PromptImageAsset } from '@/domain/promptSchema'
 import { runDataMigrations } from './dataMigrations'
 
 export interface PromptDB {
@@ -16,10 +16,17 @@ export interface PromptDB {
     key: string
     value: { key: string; value: string | number }
   }
+  promptImageAssets: {
+    key: string
+    value: PromptImageAsset
+    indexes: {
+      'by-promptId': string
+    }
+  }
 }
 
 const DB_NAME = 'byo-prompt-manager'
-export const DB_VERSION = 3
+export const DB_VERSION = 4
 
 let dbPromise: Promise<IDBPDatabase<PromptDB>> | null = null
 
@@ -38,6 +45,10 @@ export function initDb(): Promise<IDBPDatabase<PromptDB>> {
         }
         if (oldVersion < 3) {
           db.createObjectStore('_meta', { keyPath: 'key' })
+        }
+        if (oldVersion < 4) {
+          const assetStore = db.createObjectStore('promptImageAssets', { keyPath: 'id' })
+          assetStore.createIndex('by-promptId', 'promptId')
         }
       },
     }).then(async (db) => {

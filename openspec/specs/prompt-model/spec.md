@@ -19,6 +19,7 @@ The system SHALL define a `Prompt` TypeScript type inferred from a Zod schema as
 - `model`: string — optional (AI model hint, e.g. `gpt-4o`)
 - `temperature`: number — optional, between 0 and 2 inclusive
 - `imageUrl`: string — optional, must be a valid URL if provided
+- `imageAssetId`: string — optional, stable ID of an optimized local reference image asset stored in IndexedDB
 - `createdAt`: ISO 8601 date string — required
 - `updatedAt`: ISO 8601 date string — required
 
@@ -49,6 +50,25 @@ The system SHALL define a `Prompt` TypeScript type inferred from a Zod schema as
 #### Scenario: Invalid type value fails validation
 - **WHEN** an object with `type: 'video'` is parsed
 - **THEN** `schema.safeParse()` returns `success: false` with a ZodError on `type`
+
+#### Scenario: Prompt with imageAssetId is valid
+- **WHEN** a prompt object includes a non-empty `imageAssetId` string
+- **THEN** validation succeeds
+
+#### Scenario: Prompt with legacy imageUrl remains valid
+- **WHEN** a prompt object includes a valid `imageUrl` and no `imageAssetId`
+- **THEN** validation succeeds
+- **AND** the prompt remains renderable through the remote URL fallback
+
+#### Scenario: Prompt without any image reference is valid
+- **WHEN** an image-type prompt omits both `imageAssetId` and `imageUrl`
+- **THEN** validation succeeds
+- **AND** image views show their existing placeholder behavior
+
+#### Scenario: Prompt can carry both local asset and imageUrl
+- **WHEN** a prompt object includes both `imageAssetId` and a valid `imageUrl`
+- **THEN** validation succeeds
+- **AND** rendering prefers the local asset over the remote URL
 
 ---
 

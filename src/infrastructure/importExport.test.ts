@@ -1,6 +1,7 @@
-import { describe, it, expect } from 'vitest'
-import { parseImportFile, ImportFormatError } from './importExport'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { parseImportFile, ImportFormatError, exportPromptsToJson } from './importExport'
 import { DATA_SCHEMA_VERSION } from './dataMigrations'
+import { promptRepository } from './promptRepository'
 
 // Helper: create a File from a JS value
 function makeJsonFile(content: unknown): File {
@@ -32,6 +33,10 @@ const invalidPrompt = {
 }
 
 describe('parseImportFile', () => {
+  beforeEach(() => {
+    vi.restoreAllMocks()
+  })
+
   it('returns all prompts as valid when all entries pass schema', async () => {
     const file = makeJsonFile({
       schemaVersion: DATA_SCHEMA_VERSION,
@@ -42,6 +47,7 @@ describe('parseImportFile', () => {
     })
     const result = await parseImportFile(file)
     expect(result.valid).toHaveLength(1)
+    expect(result.imageAssets).toHaveLength(0)
     expect(result.errors).toHaveLength(0)
     expect(result.valid[0].id).toBe(validPrompt.id)
     expect(result.migrationWarning).toBeUndefined()
@@ -125,6 +131,102 @@ describe('parseImportFile', () => {
     })
     const result = await parseImportFile(file)
     expect(result.migrationWarning).toBeTruthy()
+  })
+
+  it('restores exported local image asset payloads as Blobs', async () => {
+    const file = makeJsonFile({
+      schemaVersion: DATA_SCHEMA_VERSION,
+      appVersion: '0.1.0',
+      exportedAt: now,
+      promptCount: 1,
+      prompts: [{ ...validPrompt, type: 'image', imageAssetId: 'asset-1' }],
+      imageAssets: [
+        {
+          id: 'asset-1',
+          promptId: validPrompt.id,
+          mimeType: 'image/webp',
+          width: 2,
+          height: 1,
+          sizeBytes: 4,
+          source: 'upload',
+          createdAt: now,
+          payloadBase64: btoa('webp'),
+        },
+      ],
+    })
+
+    const result = await parseImportFile(file)
+
+    expect(result.valid).toHaveLength(1)
+    expect(result.imageAssets).toHaveLength(1)
+    expect(result.imageAssets[0].blob).toBeInstanceOf(Blob)
+    await expect(result.imageAssets[0].blob.text()).resolves.toBe('webp')
+  })
+
+  it('reports invalid image asset payloads without rejecting valid prompts', async () => {
+    const file = makeJsonFile({
+      schemaVersion: DATA_SCHEMA_VERSION,
+      appVersion: '0.1.0',
+      exportedAt: now,
+      promptCount: 1,
+      prompts: [validPrompt],
+      imageAssets: [{ id: 'asset-1', promptId: validPrompt.id, mimeType: 'image/png' }],
+    })
+
+    const result = await parseImportFile(file)
+
+    expect(result.valid).toHaveLength(1)
+    expect(result.imageAssets).toHaveLength(0)
+    expect(result.errors.some((error) => error.reason.includes('Image asset'))).toBe(true)
+  })
+})
+
+describe('exportPromptsToJson', () => {
+  beforeEach(() => {
+    vi.restoreAllMocks()
+  })
+
+  it('exports image assets separately from prompt records', async () => {
+    const prompt = { ...validPrompt, type: 'image' as const, imageAssetId: 'asset-1' }
+    vi.spyOn(promptRepository, 'getImageAssetById').mockResolvedValue({
+      id: 'asset-1',
+      promptId: prompt.id,
+      blob: new Blob(['webp'], { type: 'image/webp' }),
+      mimeType: 'image/webp',
+      width: 2,
+      height: 1,
+      sizeBytes: 4,
+      source: 'upload',
+      createdAt: now,
+    })
+    const click = vi.fn()
+    const appendChild = vi
+      .spyOn(document.body, 'appendChild')
+      .mockImplementation((node) => node)
+    const removeChild = vi
+      .spyOn(document.body, 'removeChild')
+      .mockImplementation((node) => node)
+    let exportedJson: Promise<string> | undefined
+    vi.spyOn(document, 'createElement').mockReturnValue({
+      click,
+      set href(_value: string) {},
+      set download(_value: string) {},
+    } as unknown as HTMLAnchorElement)
+    vi.spyOn(URL, 'createObjectURL').mockImplementation((blob) => {
+      exportedJson = (blob as Blob).text()
+      return 'blob:test'
+    })
+    vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => undefined)
+
+    await exportPromptsToJson([prompt])
+
+    const parsed = JSON.parse(await exportedJson!) as Record<string, unknown>
+    expect(parsed.prompts).toEqual([prompt])
+    expect((parsed.imageAssets as unknown[])).toHaveLength(1)
+    expect(JSON.stringify(parsed.prompts)).not.toContain('payloadBase64')
+    expect(click).toHaveBeenCalled()
+    expect(appendChild).toHaveBeenCalled()
+    expect(removeChild).toHaveBeenCalled()
   })
 })
 

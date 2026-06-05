@@ -5,10 +5,12 @@ import remarkBreaks from 'remark-breaks'
 import { usePrompts } from './PromptsContext'
 import { promptRepository } from '@/infrastructure/promptRepository'
 import type { Prompt } from '@/domain/promptSchema'
+import { optimizeReferenceImage, type OptimizedImage } from '@/infrastructure/imageOptimization'
 import { Badge } from '@/shared/ui/Badge'
 import { Button } from '@/shared/ui/Button'
 import { Modal } from '@/shared/ui/Modal'
 import { useToast, ToastContainer } from '@/shared/ui/Toast'
+import { usePromptImageSource } from './usePromptImageSource'
 
 // ---------------------------------------------------------------------------
 // Preserve leading whitespace (spaces/tabs) in Markdown rendering.
@@ -103,6 +105,20 @@ function TagInput({ tags, onChange }: TagInputProps) {
 interface FormErrors {
   title?: string
   content?: string
+  image?: string
+}
+
+interface PendingImageAttachment {
+  optimized: OptimizedImage
+  source: 'upload' | 'remote-url'
+  originalName?: string
+  originalUrl?: string
+}
+
+function clearFormError(errors: FormErrors, key: keyof FormErrors): FormErrors {
+  const next = { ...errors }
+  delete next[key]
+  return next
 }
 
 export function PromptView() {
@@ -128,12 +144,45 @@ export function PromptView() {
   const [notes, setNotes] = useState(prompt?.notes ?? '')
   const [model, setModel] = useState(prompt?.model ?? '')
   const [imageUrl, setImageUrl] = useState(prompt?.imageUrl ?? '')
+  const [imageAssetId, setImageAssetId] = useState(prompt?.imageAssetId ?? '')
+  const [pendingImage, setPendingImage] = useState<PendingImageAttachment | null>(null)
+  const [imageBusy, setImageBusy] = useState(false)
   const [type, setType] = useState<'text' | 'image'>(prompt?.type ?? state.initialType ?? 'text')
   const [temperature, setTemperature] = useState<string>(
     prompt?.temperature !== undefined ? String(prompt.temperature) : '',
   )
   const [errors, setErrors] = useState<FormErrors>({})
   const [submitting, setSubmitting] = useState(false)
+  const imageInputRef = useRef<HTMLInputElement>(null)
+  const readImage = usePromptImageSource(prompt)
+
+  useEffect(() => {
+    setTitle(prompt?.title ?? '')
+    setContent(prompt?.content ?? '')
+    setDescription(prompt?.description ?? '')
+    setTags(prompt?.tags ?? [])
+    setNotes(prompt?.notes ?? '')
+    setModel(prompt?.model ?? '')
+    setImageUrl(prompt?.imageUrl ?? '')
+    setImageAssetId(prompt?.imageAssetId ?? '')
+    setPendingImage(null)
+    setType(prompt?.type ?? state.initialType ?? 'text')
+    setTemperature(prompt?.temperature !== undefined ? String(prompt.temperature) : '')
+    setErrors({})
+  }, [
+    prompt?.id,
+    prompt?.title,
+    prompt?.content,
+    prompt?.description,
+    prompt?.tags,
+    prompt?.notes,
+    prompt?.model,
+    prompt?.imageUrl,
+    prompt?.imageAssetId,
+    prompt?.type,
+    prompt?.temperature,
+    state.initialType,
+  ])
 
   // Esc key listener — read mode only
   useEffect(() => {
@@ -194,6 +243,71 @@ export function PromptView() {
     setShowDeleteModal(false)
   }
 
+  async function prepareImageAttachment(
+    blob: Blob,
+    source: 'upload' | 'remote-url',
+    metadata: { originalName?: string; originalUrl?: string } = {},
+  ) {
+    setImageBusy(true)
+    setErrors((current) => clearFormError(current, 'image'))
+    try {
+      const optimized = await optimizeReferenceImage(blob)
+      setPendingImage({
+        optimized,
+        source,
+        ...(metadata.originalName !== undefined ? { originalName: metadata.originalName } : {}),
+        ...(metadata.originalUrl !== undefined ? { originalUrl: metadata.originalUrl } : {}),
+      })
+      setImageAssetId('')
+    } catch (error) {
+      setPendingImage(null)
+      setErrors((current) => ({
+        ...current,
+        image: error instanceof Error ? error.message : 'Could not prepare this image.',
+      }))
+    } finally {
+      setImageBusy(false)
+    }
+  }
+
+  async function handleImageFile(file: File | undefined) {
+    if (!file) return
+    await prepareImageAttachment(file, 'upload', { originalName: file.name })
+  }
+
+  async function handleImportImageUrl() {
+    const url = imageUrl.trim()
+    if (!url) {
+      setErrors((current) => ({ ...current, image: 'Enter a public image URL before importing it locally.' }))
+      return
+    }
+
+    setImageBusy(true)
+    setErrors((current) => clearFormError(current, 'image'))
+    try {
+      const response = await fetch(url, { mode: 'cors' })
+      if (!response.ok) throw new Error('The image URL could not be downloaded.')
+      const blob = await response.blob()
+      await prepareImageAttachment(blob, 'remote-url', { originalUrl: url })
+    } catch (error) {
+      setPendingImage(null)
+      setErrors((current) => ({
+        ...current,
+        image:
+          error instanceof Error
+            ? `${error.message} You can still save the URL as a remote image reference.`
+            : 'Local import failed. You can still save the URL as a remote image reference.',
+      }))
+      setImageBusy(false)
+    }
+  }
+
+  function handleRemoveLocalImage() {
+    setPendingImage(null)
+    setImageAssetId('')
+    setErrors((current) => clearFormError(current, 'image'))
+  }
+
   // ---------------------------------------------------------------------------
   // Edit/Create mode actions
   // ---------------------------------------------------------------------------
@@ -211,40 +325,69 @@ export function PromptView() {
     setSubmitting(true)
     try {
       const tempValue = temperature !== '' ? parseFloat(temperature) : undefined
+      const baseData = {
+        title: title.trim(),
+        content: content.trim(),
+        description: description.trim() || undefined,
+        tags,
+        notes: notes.trim() || undefined,
+        model: model.trim() || undefined,
+        imageUrl: imageUrl.trim() || undefined,
+        imageAssetId: pendingImage ? (prompt?.imageAssetId ?? undefined) : imageAssetId || undefined,
+        temperature: tempValue,
+        type,
+      }
+      let saved: Prompt
+
       if (!isCreate && prompt) {
         // Edit mode
-        const updated = await promptRepository.update(prompt.id, {
-          title: title.trim(),
-          content: content.trim(),
-          description: description.trim() || undefined,
-          tags,
-          notes: notes.trim() || undefined,
-          model: model.trim() || undefined,
-          imageUrl: imageUrl.trim() || undefined,
-          temperature: tempValue,
-          type,
-        })
-        dispatch({ type: 'UPDATE', prompt: updated })
+        saved = await promptRepository.update(prompt.id, baseData)
+        if (pendingImage) {
+          const asset = await promptRepository.createImageAsset({
+            promptId: saved.id,
+            blob: pendingImage.optimized.blob,
+            mimeType: pendingImage.optimized.mimeType,
+            width: pendingImage.optimized.width,
+            height: pendingImage.optimized.height,
+            sizeBytes: pendingImage.optimized.sizeBytes,
+            source: pendingImage.source,
+            ...(pendingImage.originalName !== undefined ? { originalName: pendingImage.originalName } : {}),
+            ...(pendingImage.originalUrl !== undefined ? { originalUrl: pendingImage.originalUrl } : {}),
+          })
+          saved = await promptRepository.update(saved.id, { imageAssetId: asset.id })
+        }
+        dispatch({ type: 'UPDATE', prompt: saved })
         setIsEditing(false)
       } else {
         // Create mode
-        const created = await promptRepository.create({
-          title: title.trim(),
-          content: content.trim(),
-          description: description.trim() || undefined,
-          tags,
-          notes: notes.trim() || undefined,
-          model: model.trim() || undefined,
-          imageUrl: imageUrl.trim() || undefined,
-          temperature: tempValue,
+        saved = await promptRepository.create({
+          ...baseData,
           isFavorite: false,
-          type,
         })
-        dispatch({ type: 'ADD', prompt: created })
-        dispatch({ type: 'SELECT', id: created.id })
+        if (pendingImage) {
+          const asset = await promptRepository.createImageAsset({
+            promptId: saved.id,
+            blob: pendingImage.optimized.blob,
+            mimeType: pendingImage.optimized.mimeType,
+            width: pendingImage.optimized.width,
+            height: pendingImage.optimized.height,
+            sizeBytes: pendingImage.optimized.sizeBytes,
+            source: pendingImage.source,
+            ...(pendingImage.originalName !== undefined ? { originalName: pendingImage.originalName } : {}),
+            ...(pendingImage.originalUrl !== undefined ? { originalUrl: pendingImage.originalUrl } : {}),
+          })
+          saved = await promptRepository.update(saved.id, { imageAssetId: asset.id })
+        }
+        dispatch({ type: 'ADD', prompt: saved })
+        dispatch({ type: 'SELECT', id: saved.id })
       }
-    } catch {
-      // surface error visually if needed
+      setPendingImage(null)
+      setImageAssetId(saved.imageAssetId ?? '')
+    } catch (error) {
+      setErrors((current) => ({
+        ...current,
+        image: error instanceof Error ? error.message : 'Prompt save failed. Local image data was not attached.',
+      }))
     } finally {
       setSubmitting(false)
     }
@@ -262,6 +405,8 @@ export function PromptView() {
       setNotes(prompt?.notes ?? '')
       setModel(prompt?.model ?? '')
       setImageUrl(prompt?.imageUrl ?? '')
+      setImageAssetId(prompt?.imageAssetId ?? '')
+      setPendingImage(null)
       setType(prompt?.type ?? 'text')
       setTemperature(prompt?.temperature !== undefined ? String(prompt.temperature) : '')
       setErrors({})
@@ -372,9 +517,9 @@ export function PromptView() {
             )}
 
             {/* Image preview — image-type prompts only */}
-            {p.type === 'image' && p.imageUrl && (
+            {p.type === 'image' && readImage.src && (
               <div>
-                <img src={p.imageUrl} alt={p.title} className="w-full h-auto rounded-lg" />
+                <img src={readImage.src} alt={p.title} className="w-full h-auto rounded-lg" />
               </div>
             )}
 
@@ -453,7 +598,7 @@ export function PromptView() {
                 <input
                   type="text"
                   value={title}
-                  onChange={(e) => { setTitle(e.target.value); setErrors(({ title: _t, ...rest }) => rest) }}
+                  onChange={(e) => { setTitle(e.target.value); setErrors((current) => clearFormError(current, 'title')) }}
                   className="w-full rounded-md border border-border bg-surface px-3 py-1.5 text-sm text-text-heading focus:border-primary focus:outline-none"
                   placeholder="Prompt title"
                 />
@@ -501,6 +646,49 @@ export function PromptView() {
                 </div>
               </div>
 
+              {type === 'image' && (
+                <div>
+                  <label className="block text-sm font-medium text-text-heading mb-1">Local reference image</label>
+                  <div
+                    onDragOver={(e) => e.preventDefault()}
+                    onDrop={(e) => {
+                      e.preventDefault()
+                      void handleImageFile(e.dataTransfer.files[0])
+                    }}
+                    className="flex flex-col gap-2 rounded-md border border-dashed border-border bg-surface-muted p-3"
+                  >
+                    <div className="flex flex-wrap items-center gap-2">
+                      <Button type="button" variant="secondary" onClick={() => imageInputRef.current?.click()} disabled={imageBusy}>
+                        {imageBusy ? 'Preparing...' : pendingImage || imageAssetId ? 'Replace image' : 'Upload image'}
+                      </Button>
+                      {(pendingImage || imageAssetId) && (
+                        <Button type="button" variant="secondary" onClick={handleRemoveLocalImage} disabled={imageBusy}>
+                          Remove local image
+                        </Button>
+                      )}
+                      <span className="text-xs text-text">
+                        {pendingImage
+                          ? `Ready: ${pendingImage.optimized.width}x${pendingImage.optimized.height}, ${Math.ceil(pendingImage.optimized.sizeBytes / 1024)} KB`
+                          : imageAssetId
+                            ? 'A local image is attached.'
+                            : 'Drop an image here or choose a file.'}
+                      </span>
+                    </div>
+                    <input
+                      ref={imageInputRef}
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={(e) => {
+                        void handleImageFile(e.target.files?.[0])
+                        e.target.value = ''
+                      }}
+                    />
+                    {errors.image && <p className="text-xs text-red-600">{errors.image}</p>}
+                  </div>
+                </div>
+              )}
+
               {/* Image URL */}
               <div>
                 <label className="block text-sm font-medium text-text-heading mb-1">Image de référence (URL)</label>
@@ -511,6 +699,13 @@ export function PromptView() {
                   className="w-full rounded-md border border-border bg-surface px-3 py-1.5 text-sm text-text-heading focus:border-primary focus:outline-none"
                   placeholder="https://example.com/image.png (optional)"
                 />
+                {type === 'image' && (
+                  <div className="mt-2">
+                    <Button type="button" variant="secondary" onClick={handleImportImageUrl} disabled={imageBusy || !imageUrl.trim()}>
+                      Import URL locally
+                    </Button>
+                  </div>
+                )}
               </div>
 
               {/* Tags */}
@@ -526,7 +721,7 @@ export function PromptView() {
                 </label>
                 <textarea
                   value={content}
-                  onChange={(e) => { setContent(e.target.value); setErrors(({ content: _c, ...rest }) => rest) }}
+                  onChange={(e) => { setContent(e.target.value); setErrors((current) => clearFormError(current, 'content')) }}
                   rows={8}
                   className="w-full rounded-md border border-border bg-surface px-3 py-1.5 text-sm text-text-heading focus:border-primary focus:outline-none resize-y"
                   placeholder="Write your prompt here…"

@@ -5,11 +5,13 @@
 Provides JSON-based manual import and export of the prompt library — enabling backup, restore, and cross-device migration without a backend.
 ## Requirements
 ### Requirement: Export prompts to JSON file
-The system SHALL provide an `exportPromptsToJson(prompts: Prompt[]): void` function that:
-- Serialises all prompts into a JSON object with the envelope `{ exportedAt, appVersion, schemaVersion, promptCount, prompts }`
+The system SHALL provide an `exportPromptsToJson(prompts: Prompt[]): Promise<void>` function that:
+- Serialises all prompts into a JSON object with the envelope `{ exportedAt, appVersion, schemaVersion, promptCount, prompts, imageAssets? }`
 - Sets `exportedAt` to the current ISO 8601 timestamp
 - Sets `appVersion` to `import.meta.env.VITE_APP_VERSION` (semver string)
 - Sets `schemaVersion` to `DATA_SCHEMA_VERSION` (integer)
+- Includes local image asset records separately from the `prompts` array when prompts reference local assets
+- Keeps prompt records free of inline image binary data or base64 payloads
 - Triggers a browser file download named `byo-prompts-YYYY-MM-DD.json` (date taken from `exportedAt`)
 - Does not send any data to an external server
 
@@ -20,6 +22,16 @@ The system SHALL provide an `exportPromptsToJson(prompts: Prompt[]): void` funct
 #### Scenario: Export with empty library produces valid envelope
 - **WHEN** `exportPromptsToJson` is called with an empty array
 - **THEN** the downloaded file contains `{ schemaVersion: <number>, appVersion: <string>, promptCount: 0, prompts: [] }`
+
+#### Scenario: Export separates prompts and image assets
+- **WHEN** prompts with local image assets are exported to JSON
+- **THEN** prompt records contain `imageAssetId`
+- **AND** the image asset payloads are present in a top-level image assets section
+- **AND** prompt objects do not contain inline base64 image data
+
+#### Scenario: Export without local assets remains valid
+- **WHEN** prompts with only `imageUrl` references are exported
+- **THEN** the export remains valid without requiring image asset payloads
 
 ---
 
@@ -32,7 +44,8 @@ The system SHALL provide a `parseImportFile(file: File): Promise<ImportParseResu
 - Considère `schemaVersion: 1` si le fichier contient `schema: "v1"` sans `schemaVersion` explicite (compatibilité ascendante)
 - Si le `schemaVersion` du fichier est inférieur au courant, applique la chaîne de transformateurs `importTransformers` pour migrer les données à la volée
 - Valide chaque entrée dans `prompts` individuellement contre `PromptSchema` en utilisant `safeParse`
-- Retourne `{ valid: Prompt[], errors: ImportValidationError[], migrationWarning?: string }` où `migrationWarning` est défini si une migration à la volée a eu lieu
+- Restores valid exported local image asset payloads into `Blob` records represented in the parse result
+- Retourne `{ valid: Prompt[], imageAssets: PromptImageAsset[], errors: ImportValidationError[], migrationWarning?: string }` où `migrationWarning` est défini si une migration à la volée a eu lieu
 - Ne lance jamais d'exception pour les échecs de validation individuels ; ceux-ci s'accumulent dans `errors`
 
 #### Scenario: File with matching schemaVersion imports without warning
@@ -59,6 +72,20 @@ The system SHALL provide a `parseImportFile(file: File): Promise<ImportParseResu
 - **WHEN** `parseImportFile` is called with a file containing 3 valid prompts and 2 invalid ones
 - **THEN** `valid` has length 3 and `errors` has length 2 with `index` values identifying the invalid entries
 
+#### Scenario: Import restores local asset Blob
+- **WHEN** an export containing image asset payloads is imported
+- **THEN** each valid payload is restored as a `Blob` in the image asset result set
+- **AND** prompts reference the restored asset IDs
+
+#### Scenario: Legacy imageUrl-only import remains supported
+- **WHEN** an imported file contains prompts with `imageUrl` and no local image asset payloads
+- **THEN** those prompts import successfully as before
+
+#### Scenario: Invalid asset payload is reported without rejecting valid prompts
+- **WHEN** an imported file contains valid prompts and an invalid image asset payload
+- **THEN** valid prompts are still returned for import
+- **AND** the invalid asset is reported in import errors or warnings
+
 #### Scenario: Malformed JSON rejects with ImportFormatError
 - **WHEN** `parseImportFile` is called with a file containing invalid JSON
 - **THEN** the promise rejects with an `ImportFormatError`
@@ -67,7 +94,7 @@ The system SHALL provide a `parseImportFile(file: File): Promise<ImportParseResu
 
 ### Requirement: Import result types
 The system SHALL export the following TypeScript types from `importExport.ts`:
-- `ImportParseResult`: `{ valid: Prompt[]; errors: ImportValidationError[]; migrationWarning?: string }`
+- `ImportParseResult`: `{ valid: Prompt[]; imageAssets: PromptImageAsset[]; errors: ImportValidationError[]; migrationWarning?: string }`
 - `ImportValidationError`: `{ index: number; reason: string }`
 - `ImportFormatError`: typed `Error` subclass with `name: "ImportFormatError"`
 
@@ -84,9 +111,19 @@ The system SHALL define in `src/infrastructure/importExport.ts` a `importTransfo
 
 ### Requirement: ImportParseResult includes migrationWarning
 The system SHALL export an updated `ImportParseResult` type:
-`{ valid: Prompt[]; errors: ImportValidationError[]; migrationWarning?: string }`
+`{ valid: Prompt[]; imageAssets: PromptImageAsset[]; errors: ImportValidationError[]; migrationWarning?: string }`
 
 #### Scenario: migrationWarning is undefined when no migration occurred
 - **WHEN** the imported file has the same `schemaVersion` as `DATA_SCHEMA_VERSION`
 - **THEN** `result.migrationWarning` is `undefined`
 
+### Requirement: Markdown/frontmatter compatibility keeps imageUrl behavior
+Markdown/frontmatter import and export SHALL continue to support the existing `imageUrl` field. Markdown/frontmatter export SHALL NOT inline local image binary data into YAML frontmatter.
+
+#### Scenario: Markdown export preserves imageUrl
+- **WHEN** a prompt with `imageUrl` is exported to Markdown
+- **THEN** the frontmatter includes `imageUrl` as before
+
+#### Scenario: Markdown export omits binary local image data
+- **WHEN** a prompt with a local image asset is exported to Markdown
+- **THEN** no binary image payload or base64 image data is written into frontmatter

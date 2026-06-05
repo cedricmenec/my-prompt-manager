@@ -7,7 +7,7 @@ Defines the Gallery view: a CSS Grid layout for image-generation prompts, access
 ## Requirements
 
 ### Requirement: Gallery view displays image-gen prompts in CSS Grid layout with zoom control
-The system SHALL provide a Gallery view that displays only prompts where `type === 'image'` in a CSS Grid layout. The number of columns SHALL be controlled by a zoom slider rendered in the gallery header. The slider SHALL support values from 2 to 6 columns (inclusive), with a default of 4 columns. The slider state SHALL be local to the Gallery view component (`useState`) and SHALL NOT be persisted across sessions. Each card cell SHALL use a square aspect ratio (`aspect-square`) with `object-contain` image scaling and a dark background (`zinc-950`) to provide a letterbox effect for non-square images. The Gallery view SHALL continue to reuse the active `activeFilter` and `searchQuery` from `PromptsContext` to filter the displayed set. When no image-type prompts match, an empty-state message SHALL be shown.
+The system SHALL provide a Gallery view that displays only prompts where `type === 'image'` in a CSS Grid layout. The number of columns SHALL be controlled by a zoom slider rendered in the gallery header. The slider SHALL support values from 2 to 6 columns (inclusive), with a default of 4 columns. The slider state SHALL be local to the Gallery view component (`useState`) and SHALL NOT be persisted across sessions. Each card cell SHALL use a square aspect ratio (`aspect-square`) with `object-contain` image scaling and a dark background (`zinc-950`) to provide a letterbox effect for non-square images. Image cards SHALL render a local image asset referenced by `imageAssetId` when available, fall back to `imageUrl`, then fall back to the placeholder. The Gallery view SHALL continue to reuse the active `activeFilter` and `searchQuery` from `PromptsContext` to filter the displayed set. When no image-type prompts match, an empty-state message SHALL be shown.
 
 #### Scenario: Gallery renders in CSS Grid layout
 - **WHEN** the Gallery view is displayed
@@ -38,11 +38,11 @@ The system SHALL provide a Gallery view that displays only prompts where `type =
 - **THEN** the card cell has a square aspect ratio regardless of the image's natural dimensions
 
 #### Scenario: Image is fully visible with no cropping
-- **WHEN** an image-type prompt with a non-square `imageUrl` is displayed
+- **WHEN** an image-type prompt with a non-square local asset or `imageUrl` is displayed
 - **THEN** the image is scaled with `object-contain` so its full composition is visible, with dark letterbox bands on the sides or top/bottom as needed
 
 #### Scenario: Gallery card placeholder is square
-- **WHEN** an image-type prompt has no `imageUrl`
+- **WHEN** an image-type prompt has neither a local asset nor an `imageUrl`
 - **THEN** a square placeholder is displayed
 
 #### Scenario: Gallery shows only image-type prompts
@@ -69,6 +69,19 @@ The system SHALL provide a Gallery view that displays only prompts where `type =
 - **WHEN** the user hovers over a gallery card
 - **THEN** an overlay appears showing the prompt title and tags
 
-#### Scenario: Gallery card without imageUrl shows placeholder
-- **WHEN** an image-type prompt has no `imageUrl`
+#### Scenario: Gallery card renders local asset
+- **WHEN** an image-type prompt has a resolvable `imageAssetId`
+- **THEN** the gallery card displays the local image asset
+
+#### Scenario: Gallery card prefers local asset over imageUrl
+- **WHEN** an image-type prompt has both `imageAssetId` and `imageUrl`
+- **THEN** the gallery card displays the local image asset
+- **AND** does not load the remote URL
+
+#### Scenario: Gallery card falls back to imageUrl
+- **WHEN** an image-type prompt has no resolvable `imageAssetId` but has a valid `imageUrl`
+- **THEN** the gallery card displays the remote image URL as before
+
+#### Scenario: Gallery card without image reference shows placeholder
+- **WHEN** an image-type prompt has neither a local asset nor an `imageUrl`
 - **THEN** a placeholder is shown in place of the image

@@ -13,6 +13,7 @@ const baseData = {
 
 beforeEach(() => {
   // Replace the factory instance to get a fresh empty database per test
+  globalThis.structuredClone = <T>(value: T) => value
   globalThis.indexedDB = new IDBFactory()
   resetDb()
 })
@@ -89,6 +90,92 @@ describe('promptRepository.delete', () => {
   })
 })
 
+describe('promptRepository image assets', () => {
+  it('stores and retrieves a WebP Blob image asset', async () => {
+    const prompt = await promptRepository.create({ ...baseData, type: 'image' })
+    const blob = new Blob(['webp-data'], { type: 'image/webp' })
+    const asset = await promptRepository.createImageAsset({
+      promptId: prompt.id,
+      blob,
+      mimeType: 'image/webp',
+      width: 320,
+      height: 240,
+      sizeBytes: blob.size,
+      source: 'upload',
+      originalName: 'reference.png',
+    })
+
+    const fetched = await promptRepository.getImageAssetById(asset.id)
+    expect(fetched?.blob).toBeInstanceOf(Blob)
+    expect(await fetched?.blob.text()).toBe('webp-data')
+    expect(fetched?.mimeType).toBe('image/webp')
+  })
+
+  it('lists image assets by prompt id', async () => {
+    const prompt = await promptRepository.create({ ...baseData, type: 'image' })
+    const blob = new Blob(['asset'], { type: 'image/webp' })
+    await promptRepository.createImageAsset({
+      promptId: prompt.id,
+      blob,
+      mimeType: 'image/webp',
+      width: 1,
+      height: 1,
+      sizeBytes: blob.size,
+      source: 'upload',
+    })
+
+    const assets = await promptRepository.listImageAssetsByPrompt(prompt.id)
+    expect(assets).toHaveLength(1)
+    expect(assets[0].promptId).toBe(prompt.id)
+  })
+
+  it('deletes the previous local asset when a prompt replaces it', async () => {
+    const prompt = await promptRepository.create({ ...baseData, type: 'image' })
+    const first = await promptRepository.createImageAsset({
+      promptId: prompt.id,
+      blob: new Blob(['first'], { type: 'image/webp' }),
+      mimeType: 'image/webp',
+      width: 1,
+      height: 1,
+      sizeBytes: 5,
+      source: 'upload',
+    })
+    const second = await promptRepository.createImageAsset({
+      promptId: prompt.id,
+      blob: new Blob(['second'], { type: 'image/webp' }),
+      mimeType: 'image/webp',
+      width: 1,
+      height: 1,
+      sizeBytes: 6,
+      source: 'upload',
+    })
+
+    await promptRepository.update(prompt.id, { imageAssetId: first.id })
+    await promptRepository.update(prompt.id, { imageAssetId: second.id })
+
+    await expect(promptRepository.getImageAssetById(first.id)).resolves.toBeUndefined()
+    await expect(promptRepository.getImageAssetById(second.id)).resolves.toBeTruthy()
+  })
+
+  it('deletes owned assets when deleting a prompt', async () => {
+    const prompt = await promptRepository.create({ ...baseData, type: 'image' })
+    const asset = await promptRepository.createImageAsset({
+      promptId: prompt.id,
+      blob: new Blob(['asset'], { type: 'image/webp' }),
+      mimeType: 'image/webp',
+      width: 1,
+      height: 1,
+      sizeBytes: 5,
+      source: 'upload',
+    })
+    await promptRepository.update(prompt.id, { imageAssetId: asset.id })
+
+    await promptRepository.delete(prompt.id)
+
+    await expect(promptRepository.getImageAssetById(asset.id)).resolves.toBeUndefined()
+  })
+})
+
 describe('promptRepository.bulkImport', () => {
   it('stores all provided prompts', async () => {
     const now = new Date().toISOString()
@@ -126,14 +213,19 @@ describe('promptRepository.deleteAll', () => {
 })
 
 describe('DB_VERSION and _meta store', () => {
-  it('DB_VERSION is 3', async () => {
+  it('DB_VERSION is 4', async () => {
     const { DB_VERSION } = await import('./db')
-    expect(DB_VERSION).toBe(3)
+    expect(DB_VERSION).toBe(4)
   })
 
   it('_meta store exists after initDb()', async () => {
     const db = await initDb()
     expect(db.objectStoreNames.contains('_meta')).toBe(true)
+  })
+
+  it('promptImageAssets store exists after initDb()', async () => {
+    const db = await initDb()
+    expect(db.objectStoreNames.contains('promptImageAssets')).toBe(true)
   })
 
   it('_meta contains schemaVersion after initDb()', async () => {

@@ -26,6 +26,26 @@ describe('PromptSchema', () => {
       model: 'gpt-4o',
       temperature: 0.8,
       imageUrl: 'https://example.com/image.png',
+      imageAssetId: 'local-image-asset',
+    })
+    expect(result.success).toBe(true)
+  })
+
+  it('accepts an image prompt with a local image asset reference', () => {
+    const result = PromptSchema.safeParse({
+      ...validPrompt,
+      type: 'image',
+      imageAssetId: 'asset-1',
+    })
+    expect(result.success).toBe(true)
+  })
+
+  it('accepts an image prompt that has both imageAssetId and imageUrl', () => {
+    const result = PromptSchema.safeParse({
+      ...validPrompt,
+      type: 'image',
+      imageAssetId: 'asset-1',
+      imageUrl: 'https://example.com/image.png',
     })
     expect(result.success).toBe(true)
   })
@@ -43,7 +63,8 @@ describe('PromptSchema', () => {
   })
 
   it('fails when title is missing', () => {
-    const { title: _t, ...withoutTitle } = validPrompt
+    const withoutTitle = { ...validPrompt } as Partial<typeof validPrompt>
+    delete withoutTitle.title
     const result = PromptSchema.safeParse(withoutTitle)
     expect(result.success).toBe(false)
     if (!result.success) {

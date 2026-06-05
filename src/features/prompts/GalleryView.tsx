@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { usePrompts } from './PromptsContext'
 import { Badge } from '@/shared/ui/Badge'
 import type { Prompt } from '@/domain/promptSchema'
+import { usePromptImageSource } from './usePromptImageSource'
 
 // ---------------------------------------------------------------------------
 // GalleryCard
@@ -14,6 +15,8 @@ interface GalleryCardProps {
 
 function GalleryCard({ prompt, onClick }: GalleryCardProps) {
   const [imageError, setImageError] = useState(false)
+  const image = usePromptImageSource(prompt)
+  const imageSrc = image.src
 
   return (
     <button
@@ -22,10 +25,10 @@ function GalleryCard({ prompt, onClick }: GalleryCardProps) {
       aria-label={prompt.title}
     >
       {/* Image or placeholder */}
-      {prompt.imageUrl && !imageError ? (
+      {imageSrc && !imageError ? (
         <div className="aspect-square overflow-hidden bg-zinc-950">
           <img
-            src={prompt.imageUrl}
+            src={imageSrc}
             alt={prompt.title}
             className="w-full h-full object-contain"
             onError={() => setImageError(true)}
