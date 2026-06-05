@@ -34,7 +34,7 @@ export interface ImportParseResult {
 // Export
 // ---------------------------------------------------------------------------
 
-interface ExportEnvelope {
+export interface ExportEnvelope {
   exportedAt: string
   appVersion: string
   schemaVersion: number
@@ -43,7 +43,7 @@ interface ExportEnvelope {
   imageAssets?: ExportedImageAsset[]
 }
 
-interface ExportedImageAsset {
+export interface ExportedImageAsset {
   id: string
   promptId: string
   mimeType: 'image/webp'
@@ -58,9 +58,15 @@ interface ExportedImageAsset {
 }
 
 export async function exportPromptsToJson(prompts: Prompt[]): Promise<void> {
+  const envelope = await createPromptExportEnvelope(prompts)
+  const json = serializePromptExportEnvelope(envelope)
+  downloadJson(json, buildExportFileName(envelope.exportedAt))
+}
+
+export async function createPromptExportEnvelope(prompts: Prompt[]): Promise<ExportEnvelope> {
   const exportedAt = new Date().toISOString()
   const imageAssets = await collectExportableImageAssets(prompts)
-  const envelope: ExportEnvelope = {
+  return {
     exportedAt,
     appVersion: import.meta.env.VITE_APP_VERSION,
     schemaVersion: DATA_SCHEMA_VERSION,
@@ -68,13 +74,22 @@ export async function exportPromptsToJson(prompts: Prompt[]): Promise<void> {
     prompts,
     ...(imageAssets.length > 0 ? { imageAssets } : {}),
   }
-  const json = JSON.stringify(envelope, null, 2)
+}
+
+export function serializePromptExportEnvelope(envelope: ExportEnvelope): string {
+  return JSON.stringify(envelope, null, 2)
+}
+
+export function buildExportFileName(exportedAt = new Date().toISOString()): string {
+  return `byo-prompts-${exportedAt.slice(0, 10)}.json`
+}
+
+function downloadJson(json: string, fileName: string): void {
   const blob = new Blob([json], { type: 'application/json' })
   const url = URL.createObjectURL(blob)
-  const dateStr = exportedAt.slice(0, 10) // YYYY-MM-DD
   const a = document.createElement('a')
   a.href = url
-  a.download = `byo-prompts-${dateStr}.json`
+  a.download = fileName
   document.body.appendChild(a)
   a.click()
   document.body.removeChild(a)
@@ -137,7 +152,10 @@ function migrateImportedPrompts(
 
 export async function parseImportFile(file: File): Promise<ImportParseResult> {
   const text = await file.text()
+  return parseImportText(text)
+}
 
+export async function parseImportText(text: string): Promise<ImportParseResult> {
   let parsed: unknown
   try {
     parsed = JSON.parse(text)

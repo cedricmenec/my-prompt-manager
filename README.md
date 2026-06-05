@@ -68,6 +68,56 @@ Open [http://localhost:5173](http://localhost:5173) in your browser.
 4. Click any prompt card to open the detail panel.
 5. Use **Edit** to change a prompt, **Copy** to copy content to clipboard, or **Delete** to remove it.
 
+## Google Drive import, export, and snapshots
+
+Google Drive is optional and user-owned. The app stays static and browser-only: it does not use a
+backend, a shared OAuth client secret, a refresh token store, or an app-owned Google account.
+
+### Google Cloud setup
+
+1. In Google Cloud Console, create or choose a project.
+2. Configure the OAuth consent screen for your own use.
+3. Create an OAuth Client ID with the **Web application** type.
+4. Add the **Authorized JavaScript origin** where this static app runs, such as
+   `http://localhost:5173` for development or your GitHub Pages origin for production.
+   Do not include a path like `/my-prompt-manager/` in the origin.
+5. Copy only the OAuth Client ID into Settings. Do not create, paste, store, or share a client
+   secret for this browser app.
+
+The Drive integration requests `https://www.googleapis.com/auth/drive.file`. Access tokens are kept
+in memory for the current browser session only. When the session expires, reconnect from Settings.
+The app uses the Google Identity Services token popup flow, so it does not require an Authorized
+redirect URI.
+
+### Drive folder setup
+
+Create a visible Google Drive folder yourself, then paste either its folder URL or folder ID into
+Settings. Use **Test folder** to confirm the app can write to it. The test creates a small
+temporary `.byo-prompt-manager-folder-test-*.json` file and then deletes it; this avoids relying on
+folder metadata reads that may be blocked by the `drive.file` scope. Drive Picker, hidden
+`appDataFolder` sync, conflict resolution, encrypted vault support, and encrypted secret export are
+deferred.
+
+### Workflows
+
+- **Local export/import**: Settings -> Data keeps the offline JSON download and file import flow.
+  It does not require Google Drive.
+- **Drive export**: Settings -> Google Drive -> connect, then use **Export to Drive**. The app
+  uploads the same prompt export envelope to the configured folder.
+- **Drive import**: load Drive exports, select a JSON export, and confirm replacement. The same
+  parsing, schema validation, and replacement flow as local import is used.
+- **Snapshots**: enable visible Drive snapshots and keep the default 15 minute interval or choose a
+  whole number from 5 to 1440 minutes. Snapshots are created after successful manual Drive exports,
+  before Drive imports/restores when possible, and automatically while connected when exportable
+  data changed since the last successful snapshot.
+- **Restore**: load snapshots, select one, and confirm replacement. Invalid or unsupported snapshot
+  payloads are rejected before local prompt data is modified.
+
+Prompt exports and snapshots are unencrypted by default and are visible files in your Drive folder.
+They include prompt data, local prompt image assets, schema metadata, and app metadata. They do not
+include AI API keys, OAuth access tokens, OAuth refresh tokens, client secrets, passphrases, or
+connector secrets.
+
 ## Project structure
 
 ```

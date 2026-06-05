@@ -1,28 +1,4 @@
-import { useState, useCallback } from 'react'
-
-type ToastVariant = 'success' | 'error'
-
-interface Toast {
-  id: number
-  message: string
-  variant: ToastVariant
-}
-
-let toastSeq = 0
-
-export function useToast() {
-  const [toasts, setToasts] = useState<Toast[]>([])
-
-  const show = useCallback((message: string, variant: ToastVariant = 'success') => {
-    const id = ++toastSeq
-    setToasts((prev) => [...prev, { id, message, variant }])
-    setTimeout(() => {
-      setToasts((prev) => prev.filter((t) => t.id !== id))
-    }, 3000)
-  }, [])
-
-  return { toasts, show }
-}
+import type { Toast } from './useToast'
 
 interface ToastContainerProps {
   toasts: Toast[]

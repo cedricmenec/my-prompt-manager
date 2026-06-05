@@ -9,7 +9,8 @@ import { optimizeReferenceImage, type OptimizedImage } from '@/infrastructure/im
 import { Badge } from '@/shared/ui/Badge'
 import { Button } from '@/shared/ui/Button'
 import { Modal } from '@/shared/ui/Modal'
-import { useToast, ToastContainer } from '@/shared/ui/Toast'
+import { ToastContainer } from '@/shared/ui/Toast'
+import { useToast } from '@/shared/ui/useToast'
 import { usePromptImageSource } from './usePromptImageSource'
 
 // ---------------------------------------------------------------------------

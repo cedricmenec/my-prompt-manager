@@ -12,6 +12,8 @@ import type { Prompt } from '@/domain/promptSchema'
 import { promptRepository } from '@/infrastructure/promptRepository'
 import { initDb } from '@/infrastructure/db'
 
+/* eslint-disable react-refresh/only-export-components */
+
 // ---------------------------------------------------------------------------
 // Filter type
 // ---------------------------------------------------------------------------
@@ -85,9 +87,8 @@ function promptsReducer(state: PromptsState, action: Action): PromptsState {
       return { ...state, selectedPromptId: null, viewMode: null }
 
     case 'OPEN_CREATE': {
-      const { initialType: _prev, ...rest } = state
       return {
-        ...rest,
+        prompts: state.prompts,
         selectedPromptId: null,
         viewMode: 'edit',
         ...(action.initialType !== undefined ? { initialType: action.initialType } : {}),
@@ -98,8 +99,7 @@ function promptsReducer(state: PromptsState, action: Action): PromptsState {
       return { ...state, viewMode: 'edit' }
 
     case 'CLOSE_EDITOR': {
-      const { initialType: _discarded, ...rest } = state
-      return { ...rest, viewMode: null }
+      return { prompts: state.prompts, selectedPromptId: state.selectedPromptId, viewMode: null }
     }
 
     default:
