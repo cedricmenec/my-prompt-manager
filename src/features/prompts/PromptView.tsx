@@ -8,6 +8,7 @@ import type { Prompt } from '@/domain/promptSchema'
 import { optimizeReferenceImage, type OptimizedImage } from '@/infrastructure/imageOptimization'
 import { Badge } from '@/shared/ui/Badge'
 import { Button } from '@/shared/ui/Button'
+import { MarkdownEditor } from '@/shared/ui/MarkdownEditor'
 import { Modal } from '@/shared/ui/Modal'
 import { ToastContainer } from '@/shared/ui/Toast'
 import { useToast } from '@/shared/ui/useToast'
@@ -381,6 +382,7 @@ export function PromptView() {
         }
         dispatch({ type: 'ADD', prompt: saved })
         dispatch({ type: 'SELECT', id: saved.id })
+        setIsEditing(false)
       }
       setPendingImage(null)
       setImageAssetId(saved.imageAssetId ?? '')
@@ -720,12 +722,12 @@ export function PromptView() {
                 <label className="block text-sm font-medium text-text-heading mb-1">
                   Content <span className="text-red-500">*</span>
                 </label>
-                <textarea
+                <MarkdownEditor
                   value={content}
-                  onChange={(e) => { setContent(e.target.value); setErrors((current) => clearFormError(current, 'content')) }}
+                  onChange={(v) => { setContent(v); setErrors((current) => clearFormError(current, 'content')) }}
                   rows={8}
-                  className="w-full rounded-md border border-border bg-surface px-3 py-1.5 text-sm text-text-heading focus:border-primary focus:outline-none resize-y"
                   placeholder="Write your prompt here…"
+                  error={!!errors.content}
                 />
                 {errors.content && <p className="mt-1 text-xs text-red-600">{errors.content}</p>}
               </div>
