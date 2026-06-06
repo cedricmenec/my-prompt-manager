@@ -1,6 +1,13 @@
 import { fireEvent, render, screen } from '@testing-library/react'
+import 'fake-indexeddb/auto'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { IDBFactory } from 'fake-indexeddb'
+import { resetDb } from '@/infrastructure/db'
 import { SettingsPanel } from './SettingsPanel'
+
+function cloneForTest<T>(value: T): T {
+  return value
+}
 
 const authState = vi.hoisted(() => ({ connected: false }))
 
@@ -38,6 +45,9 @@ describe('SettingsPanel Google Drive settings', () => {
   beforeEach(() => {
     localStorage.clear()
     authState.connected = false
+    globalThis.structuredClone = cloneForTest
+    globalThis.indexedDB = new IDBFactory()
+    resetDb()
   })
 
   it('renders Drive controls and not configured status', () => {
@@ -84,4 +94,18 @@ describe('SettingsPanel Google Drive settings', () => {
     fireEvent.click(screen.getByText('Disconnect'))
     expect(screen.getByText('Google Drive disconnected.')).toBeTruthy()
   })
+  it('switches settings categories and preserves close behavior', () => {
+    const onClose = vi.fn()
+    render(<SettingsPanel onClose={onClose} />)
+
+    expect(screen.getByText('Legacy')).toBeTruthy()
+    fireEvent.click(screen.getByText('API & Models'))
+    expect(screen.getByText('Provider')).toBeTruthy()
+    expect(screen.getByLabelText('Settings categories')).toBeTruthy()
+
+    fireEvent.keyDown(window, { key: 'Escape' })
+    expect(onClose).toHaveBeenCalledTimes(1)
+  })
 })
+
+

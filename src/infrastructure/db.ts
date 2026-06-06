@@ -2,6 +2,32 @@ import { openDB, type IDBPDatabase } from 'idb'
 import type { Prompt, PromptImageAsset } from '@/domain/promptSchema'
 import { runDataMigrations } from './dataMigrations'
 
+export interface AiProviderConnection {
+  providerId: string
+  status: 'configured' | 'not-configured'
+  lastCatalogFetchedAt?: string
+  createdAt: string
+  updatedAt: string
+}
+
+export interface AiProviderModel {
+  id: string
+  providerId: string
+  name: string
+  originProvider: string
+  modality: 'text' | 'image' | 'multimodal' | 'unknown'
+  tokenCost: null
+  fetchedAt: string
+  raw?: unknown
+}
+
+export interface EnabledAiModel {
+  id: string
+  providerId: string
+  modelId: string
+  enabledAt: string
+}
+
 export interface PromptDB {
   prompts: {
     key: string
@@ -23,10 +49,30 @@ export interface PromptDB {
       'by-promptId': string
     }
   }
+  aiProviderConnections: {
+    key: string
+    value: AiProviderConnection
+  }
+  aiProviderModels: {
+    key: string
+    value: AiProviderModel
+    indexes: {
+      'by-providerId': string
+      'by-fetchedAt': string
+    }
+  }
+  enabledAiModels: {
+    key: string
+    value: EnabledAiModel
+    indexes: {
+      'by-providerId': string
+      'by-modelId': string
+    }
+  }
 }
 
 const DB_NAME = 'byo-prompt-manager'
-export const DB_VERSION = 4
+export const DB_VERSION = 5
 
 let dbPromise: Promise<IDBPDatabase<PromptDB>> | null = null
 
@@ -50,6 +96,15 @@ export function initDb(): Promise<IDBPDatabase<PromptDB>> {
           const assetStore = db.createObjectStore('promptImageAssets', { keyPath: 'id' })
           assetStore.createIndex('by-promptId', 'promptId')
         }
+        if (oldVersion < 5) {
+          db.createObjectStore('aiProviderConnections', { keyPath: 'providerId' })
+          const modelStore = db.createObjectStore('aiProviderModels', { keyPath: 'id' })
+          modelStore.createIndex('by-providerId', 'providerId')
+          modelStore.createIndex('by-fetchedAt', 'fetchedAt')
+          const enabledStore = db.createObjectStore('enabledAiModels', { keyPath: 'id' })
+          enabledStore.createIndex('by-providerId', 'providerId')
+          enabledStore.createIndex('by-modelId', 'modelId')
+        }
       },
     }).then(async (db) => {
       await runDataMigrations(db)
@@ -68,4 +123,5 @@ export function getDb(): Promise<IDBPDatabase<PromptDB>> {
 export function resetDb(): void {
   dbPromise = null
 }
+
 

@@ -33,12 +33,14 @@ import { createPreOperationSnapshot } from '@/infrastructure/driveSnapshots'
 import { Modal } from '@/shared/ui/Modal'
 import { ToastContainer } from '@/shared/ui/Toast'
 import { useToast } from '@/shared/ui/useToast'
+import { ApiModelsSettingsView } from './ApiModelsSettingsView'
 
 interface SettingsPanelProps {
   onClose: () => void
 }
 
 type ImportSource = 'local' | 'drive' | 'snapshot'
+type SettingsSection = 'legacy' | 'api-models'
 
 export function SettingsPanel({ onClose }: SettingsPanelProps) {
   const { state, dispatch } = usePrompts()
@@ -58,6 +60,7 @@ export function SettingsPanel({ onClose }: SettingsPanelProps) {
   const [selectedDriveFileId, setSelectedDriveFileId] = useState('')
   const [selectedSnapshotId, setSelectedSnapshotId] = useState('')
   const [isBusy, setIsBusy] = useState(false)
+  const [activeSection, setActiveSection] = useState<SettingsSection>('legacy')
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
@@ -295,7 +298,7 @@ export function SettingsPanel({ onClose }: SettingsPanelProps) {
           role="dialog"
           aria-modal="true"
           aria-label="Settings"
-          className="relative max-h-[92vh] w-full max-w-2xl overflow-y-auto rounded-xl bg-surface p-6 shadow-xl"
+          className="relative max-h-[92vh] w-full max-w-5xl overflow-y-auto rounded-xl bg-surface p-6 shadow-xl"
           onClick={(e) => e.stopPropagation()}
         >
           <div className="mb-6 flex items-center justify-between">
@@ -309,6 +312,25 @@ export function SettingsPanel({ onClose }: SettingsPanelProps) {
             </button>
           </div>
 
+          <div className="grid gap-6 md:grid-cols-[12rem_1fr]">
+            <nav className="flex gap-2 overflow-x-auto border-b border-border pb-3 md:flex-col md:border-b-0 md:border-r md:pb-0 md:pr-4" aria-label="Settings categories">
+              <button
+                type="button"
+                onClick={() => setActiveSection('legacy')}
+                className={`rounded-lg px-3 py-2 text-left text-sm font-medium ${activeSection === 'legacy' ? 'bg-surface-muted text-text-heading' : 'text-text hover:bg-surface-muted'}`}
+              >
+                Legacy
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveSection('api-models')}
+                className={`rounded-lg px-3 py-2 text-left text-sm font-medium ${activeSection === 'api-models' ? 'bg-surface-muted text-text-heading' : 'text-text hover:bg-surface-muted'}`}
+              >
+                API & Models
+              </button>
+            </nav>
+
+            <div className={activeSection === 'legacy' ? 'block' : 'hidden'}>
           <section className="mb-6">
             <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-text">Data</h3>
             <div className="flex flex-wrap gap-3">
@@ -448,6 +470,12 @@ export function SettingsPanel({ onClose }: SettingsPanelProps) {
               <span className="rounded-full bg-surface-muted px-2 py-0.5 text-xs text-text">coming soon</span>
             </div>
           </section>
+            </div>
+
+            <div className={activeSection === 'api-models' ? 'block' : 'hidden'}>
+              <ApiModelsSettingsView />
+            </div>
+          </div>
         </div>
       </div>
 
@@ -491,3 +519,4 @@ export function SettingsPanel({ onClose }: SettingsPanelProps) {
     </>
   )
 }
+
