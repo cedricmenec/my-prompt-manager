@@ -20,12 +20,21 @@ The system SHALL define AI provider metadata separately from user settings, with
 ---
 
 ### Requirement: OpenRouter API key entry
-The system SHALL provide an OpenRouter API key input in the `API & Models` settings section and SHALL keep the entered key in session memory only for this change.
+The system SHALL provide an OpenRouter API key input in the `API & Models` settings section. When an encrypted vault is unlocked, the system SHALL persist the entered key into the vault (encrypted at rest) and restore it from the vault on subsequent sessions. The key SHALL remain available in session memory for the duration of the session. When no vault is available, the system SHALL keep the key in session memory only.
 
-#### Scenario: User enters an OpenRouter API key
-- **WHEN** the user enters a key in the OpenRouter API key field
+#### Scenario: User enters an OpenRouter API key with vault unlocked
+- **WHEN** the user enters a key in the OpenRouter API key field and the vault is unlocked
 - **THEN** the key is available for the current settings session
+- **AND** the key is persisted in the encrypted vault (never in plaintext in IndexedDB, localStorage, or logs)
+
+#### Scenario: User enters an OpenRouter API key without vault
+- **WHEN** the user enters a key in the OpenRouter API key field and no vault exists or vault is locked
+- **THEN** the key is available for the current session only
 - **AND** the key is not written to `localStorage`, IndexedDB, import/export payloads, Drive snapshots, or logs
+
+#### Scenario: API key is restored from vault on session start
+- **WHEN** the page loads, an encrypted vault exists, and the user unlocks it with the correct passphrase
+- **THEN** previously stored API keys are available in session memory without re-entry
 
 #### Scenario: User needs an OpenRouter key
 - **WHEN** the OpenRouter key field is visible

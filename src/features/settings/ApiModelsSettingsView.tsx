@@ -31,6 +31,16 @@ export function ApiModelsSettingsView() {
       if (cachedModels.length > 0) {
         setMessage(`${cachedModels.length} cached model${cachedModels.length !== 1 ? 's' : ''} available locally.`)
       }
+
+      // Restore API key from session credentials (vault or in-memory cache)
+      const restoredKey = sessionCredentials.getApiKey(selectedProviderId)
+      if (restoredKey && !cancelled) {
+        setApiKey(restoredKey)
+        // Update message to indicate key was restored from vault
+        if (loadState === 'idle') {
+          setMessage('API key restored from vault. Load models to refresh the catalog.')
+        }
+      }
     }
     void restoreProviderSettings()
     return () => {

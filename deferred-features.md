@@ -37,7 +37,7 @@ Features deliberately scoped out of the `manual-import-export` change.
 
 **Description**: The Settings panel now includes an `API & Models` section for session-only OpenRouter key entry, model catalog loading, cached model metadata, and enabled model selection stored in IndexedDB.
 
-**Deferred follow-up**: Encrypted Vault persistence for API keys is intentionally deferred. Persistent BYOK secrets must not be offered until a local encrypted vault stores sensitive material with a user-controlled passphrase and keeps decrypted keys in memory only.
+**Status**: ✅ Implemented — Encrypted vault persistence for API keys has been implemented in the `encrypted-vault` change.
 
 **Why deferred**: This change establishes provider/model selection without persisting raw API keys. Storing API keys in clear text in localStorage or IndexedDB would violate the local-first BYOK security model.
 

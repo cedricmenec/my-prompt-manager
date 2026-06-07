@@ -87,10 +87,25 @@ export interface PromptDB {
       'by-modelId': string
     }
   }
+  encryptedVault: {
+    key: 'vault'
+    value: EncryptedVaultRecord
+  }
+}
+
+export interface EncryptedVaultRecord {
+  key: 'vault'
+  version: 1
+  salt: Uint8Array
+  iv: Uint8Array
+  verifyHash: Uint8Array
+  data: Uint8Array
+  createdAt: string
+  updatedAt: string
 }
 
 const DB_NAME = 'byo-prompt-manager'
-export const DB_VERSION = 8
+export const DB_VERSION = 10
 
 let dbPromise: Promise<IDBPDatabase<PromptDB>> | null = null
 
@@ -145,6 +160,18 @@ export function initDb(): Promise<IDBPDatabase<PromptDB>> {
           featureStore.createIndex('by-modelId', 'modelId')
         } else {
           console.log(`[DB] v${oldVersion}→${newVersion}: "aiFeatureSettings" already present, skipping`)
+        }
+
+        // v8→v9: Create encryptedVault store for the local encrypted vault.
+        if (oldVersion < 9) {
+          console.log('[DB] v9: Creating "encryptedVault" store')
+          db.createObjectStore('encryptedVault', { keyPath: 'key' })
+        }
+        // v9→v10: Safety-net — create encryptedVault if missing. This handles
+        // databases that reached version 9 without the store being created.
+        if (oldVersion >= 9 && !db.objectStoreNames.contains('encryptedVault')) {
+          console.log(`[DB] v${oldVersion}→${newVersion}: Creating missing "encryptedVault" store`)
+          db.createObjectStore('encryptedVault', { keyPath: 'key' })
         }
 
         console.log('[DB] Stores after upgrade:', [...db.objectStoreNames])

@@ -35,13 +35,14 @@ import { ToastContainer } from '@/shared/ui/Toast'
 import { useToast } from '@/shared/ui/useToast'
 import { ApiModelsSettingsView } from './ApiModelsSettingsView'
 import { AiFeaturesSettingsView } from './AiFeaturesSettingsView'
+import { VaultSettingsSection } from './VaultSettingsSection'
 
 interface SettingsPanelProps {
   onClose: () => void
 }
 
 type ImportSource = 'local' | 'drive' | 'snapshot'
-type SettingsSection = 'legacy' | 'api-models' | 'ai-features'
+type SettingsSection = 'legacy' | 'api-models' | 'ai-features' | 'vault'
 
 export function SettingsPanel({ onClose }: SettingsPanelProps) {
   const { state, dispatch } = usePrompts()
@@ -334,8 +335,13 @@ export function SettingsPanel({ onClose }: SettingsPanelProps) {
                 className={`rounded-lg px-3 py-2 text-left text-sm font-medium ${activeSection === 'api-models' ? 'bg-surface-muted text-text-heading' : 'text-text hover:bg-surface-muted'}`}
               >
                 API & Models
-              </button>
-            </nav>
+              </button>              <button
+                type="button"
+                onClick={() => setActiveSection('vault')}
+                className={`rounded-lg px-3 py-2 text-left text-sm font-medium ${activeSection === 'vault' ? 'bg-surface-muted text-text-heading' : 'text-text hover:bg-surface-muted'}`}
+              >
+                Vault
+              </button>            </nav>
 
             {activeSection === 'legacy' && (
             <div className="block min-h-0 overflow-y-auto pr-1">
@@ -490,6 +496,12 @@ export function SettingsPanel({ onClose }: SettingsPanelProps) {
             {activeSection === 'api-models' && (
             <div className="block min-h-0 overflow-y-auto pr-1">
               <ApiModelsSettingsView />
+            </div>
+            )}
+
+            {activeSection === 'vault' && (
+            <div className="block min-h-0 overflow-y-auto pr-1">
+              <VaultSettingsSection />
             </div>
             )}
           </div>

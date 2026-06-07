@@ -126,7 +126,7 @@ The Settings panel SHALL provide a two-column modal layout with a left sidebar f
 
 #### Scenario: Settings opens with navigable categories
 - **WHEN** the user opens the Settings panel
-- **THEN** the panel shows a left sidebar with `Legacy` and `API & Models` categories
+- **THEN** the panel shows a left sidebar with `Legacy`, `API & Models`, `AI Features`, and `Vault` categories
 - **AND** the panel shows the active category content on the right
 
 #### Scenario: User switches categories

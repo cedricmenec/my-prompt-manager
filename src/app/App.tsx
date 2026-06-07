@@ -5,6 +5,7 @@ import { ImagePromptView } from '@/features/prompts/ImagePromptView'
 import { MainLayoutShell } from '@/features/layout/MainLayoutShell'
 import { useEffect } from 'react'
 import { createAutomaticSnapshotIfNeeded } from '@/infrastructure/driveSnapshots'
+import { VaultGate } from '@/features/vault/VaultGate'
 
 export function App() {
   const { state, appView } = usePrompts()
@@ -28,8 +29,10 @@ export function App() {
   }
 
   return (
-    <MainLayoutShell>
-      {content}
-    </MainLayoutShell>
+    <VaultGate>
+      <MainLayoutShell>
+        {content}
+      </MainLayoutShell>
+    </VaultGate>
   )
 }
