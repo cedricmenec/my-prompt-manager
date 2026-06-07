@@ -25,6 +25,15 @@ const models: AiProviderModel[] = [
     tokenCost: null,
     fetchedAt,
   },
+  {
+    id: 'openrouter:stability/image-test',
+    providerId: 'openrouter',
+    name: 'Image Test',
+    originProvider: 'Stability',
+    modality: 'image',
+    tokenCost: null,
+    fetchedAt,
+  },
 ]
 
 beforeEach(() => {
@@ -43,6 +52,7 @@ describe('aiProviderSettingsRepository', () => {
     expect(cached.map((model) => model.id)).toEqual([
       'openrouter:anthropic/claude-test',
       'openrouter:openai/gpt-test',
+      'openrouter:stability/image-test',
     ])
     expect(connection?.lastCatalogFetchedAt).toBe(fetchedAt)
     expect(connection).not.toHaveProperty('apiKey')
@@ -59,17 +69,45 @@ describe('aiProviderSettingsRepository', () => {
     expect(enabled.has(models[1].id)).toBe(true)
   })
 
+  it('saves and reloads prompt input assistant feature settings', async () => {
+    await aiProviderSettingsRepository.replaceProviderModels('openrouter', models, fetchedAt)
+    await aiProviderSettingsRepository.setEnabledModels('openrouter', [models[0].id])
+    await aiProviderSettingsRepository.saveFeatureSettings('prompt-input-assistant', { providerId: 'openrouter', modelId: models[0].id })
+
+    const saved = await aiProviderSettingsRepository.saveFeatureSettings('prompt-input-assistant', {
+      providerId: 'openrouter',
+      modelId: models[0].id,
+    })
+    resetDb()
+
+    const reloaded = await aiProviderSettingsRepository.getFeatureSettings('prompt-input-assistant')
+    expect(reloaded).toEqual(saved)
+    expect(reloaded?.providerId).toBe('openrouter')
+    expect(reloaded?.modelId).toBe(models[0].id)
+  })
+
+  it('lists only enabled provider models for feature selectors', async () => {
+    await aiProviderSettingsRepository.replaceProviderModels('openrouter', models, fetchedAt)
+    await aiProviderSettingsRepository.setEnabledModels('openrouter', [models[0].id, models[2].id])
+
+    const enabled = await aiProviderSettingsRepository.listEnabledProviderModels('openrouter')
+
+    expect(enabled.map((model) => model.id)).toEqual([models[0].id, models[2].id])
+  })
+
   it('does not store API keys in provider settings stores', async () => {
     const secret = 'sk-or-secret-value'
     await aiProviderSettingsRepository.saveConnection('openrouter', { status: 'configured' })
     await aiProviderSettingsRepository.replaceProviderModels('openrouter', models, fetchedAt)
     await aiProviderSettingsRepository.setEnabledModels('openrouter', [models[0].id])
+    await aiProviderSettingsRepository.saveFeatureSettings('prompt-input-assistant', { providerId: 'openrouter', modelId: models[0].id })
 
     const db = await initDb()
     const records = [
       await db.get('aiProviderConnections', 'openrouter'),
       ...(await db.getAll('aiProviderModels')),
       ...(await db.getAll('enabledAiModels')),
+      ...(await db.getAll('aiFeatureSettings')),
     ]
 
     expect(JSON.stringify(records)).not.toContain(secret)

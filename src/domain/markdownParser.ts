@@ -45,7 +45,7 @@ export function parseMarkdown(raw: string): ParseResult {
  * Serializes a Prompt back to a Markdown string with YAML frontmatter.
  */
 export function serializeMarkdown(prompt: Prompt): string {
-  const { content, ...frontmatterFields } = prompt
+  const { content, ...frontmatterFields } = PromptSchema.parse(prompt)
   const frontmatter = yaml.dump(frontmatterFields, { lineWidth: -1 }).trimEnd()
   return `---\n${frontmatter}\n---\n${content}\n`
 }

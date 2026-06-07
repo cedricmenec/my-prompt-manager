@@ -99,9 +99,13 @@ describe('SettingsPanel Google Drive settings', () => {
     render(<SettingsPanel onClose={onClose} />)
 
     expect(screen.getByText('Legacy')).toBeTruthy()
+    fireEvent.click(screen.getByText('AI Features'))
+    expect(screen.getByText('Prompt input assistant')).toBeTruthy()
     fireEvent.click(screen.getByText('API & Models'))
     expect(screen.getByText('Provider')).toBeTruthy()
     expect(screen.getByLabelText('Settings categories')).toBeTruthy()
+    expect(screen.getByRole('dialog').className).toContain('h-[min(42rem,92vh)]')
+    expect(document.querySelector('div[class*="overflow-y-auto"][class*="pr-1"]')).toBeTruthy()
 
     fireEvent.keyDown(window, { key: 'Escape' })
     expect(onClose).toHaveBeenCalledTimes(1)

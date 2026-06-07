@@ -66,12 +66,13 @@ export async function exportPromptsToJson(prompts: Prompt[]): Promise<void> {
 export async function createPromptExportEnvelope(prompts: Prompt[]): Promise<ExportEnvelope> {
   const exportedAt = new Date().toISOString()
   const imageAssets = await collectExportableImageAssets(prompts)
+  const normalizedPrompts = prompts.map((prompt) => PromptSchema.parse(prompt))
   return {
     exportedAt,
     appVersion: import.meta.env.VITE_APP_VERSION,
     schemaVersion: DATA_SCHEMA_VERSION,
     promptCount: prompts.length,
-    prompts,
+    prompts: normalizedPrompts,
     ...(imageAssets.length > 0 ? { imageAssets } : {}),
   }
 }

@@ -28,6 +28,16 @@ export interface EnabledAiModel {
   enabledAt: string
 }
 
+export type AiFeatureId = 'prompt-input-assistant'
+
+export interface AiFeatureSettings {
+  featureId: AiFeatureId
+  providerId: string
+  modelId: string
+  createdAt: string
+  updatedAt: string
+}
+
 export interface PromptDB {
   prompts: {
     key: string
@@ -69,10 +79,18 @@ export interface PromptDB {
       'by-modelId': string
     }
   }
+  aiFeatureSettings: {
+    key: AiFeatureId
+    value: AiFeatureSettings
+    indexes: {
+      'by-providerId': string
+      'by-modelId': string
+    }
+  }
 }
 
 const DB_NAME = 'byo-prompt-manager'
-export const DB_VERSION = 5
+export const DB_VERSION = 6
 
 let dbPromise: Promise<IDBPDatabase<PromptDB>> | null = null
 
@@ -104,6 +122,11 @@ export function initDb(): Promise<IDBPDatabase<PromptDB>> {
           const enabledStore = db.createObjectStore('enabledAiModels', { keyPath: 'id' })
           enabledStore.createIndex('by-providerId', 'providerId')
           enabledStore.createIndex('by-modelId', 'modelId')
+        }
+        if (oldVersion < 6) {
+          const featureStore = db.createObjectStore('aiFeatureSettings', { keyPath: 'featureId' })
+          featureStore.createIndex('by-providerId', 'providerId')
+          featureStore.createIndex('by-modelId', 'modelId')
         }
       },
     }).then(async (db) => {

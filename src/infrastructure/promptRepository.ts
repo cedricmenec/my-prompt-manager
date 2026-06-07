@@ -1,5 +1,5 @@
 import { getDb } from './db'
-import type { Prompt, PromptImageAsset } from '@/domain/promptSchema'
+import { PromptSchema, type Prompt, type PromptImageAsset } from '@/domain/promptSchema'
 
 export class PromptNotFoundError extends Error {
   constructor(id: string) {
@@ -12,12 +12,13 @@ export const promptRepository = {
   async getAll(): Promise<Prompt[]> {
     const db = await getDb()
     const all = await db.getAllFromIndex('prompts', 'by-updatedAt')
-    return all.reverse() // index is ascending; we want newest first
+    return all.map((prompt) => PromptSchema.parse(prompt)).reverse() // index is ascending; we want newest first
   },
 
   async getById(id: string): Promise<Prompt | undefined> {
     const db = await getDb()
-    return db.get('prompts', id)
+    const prompt = await db.get('prompts', id)
+    return prompt ? PromptSchema.parse(prompt) : undefined
   },
 
   async create(
@@ -33,8 +34,9 @@ export const promptRepository = {
       createdAt: now,
       updatedAt: now,
     }
-    await db.put('prompts', prompt)
-    return prompt
+    const parsed = PromptSchema.parse(prompt)
+    await db.put('prompts', parsed)
+    return parsed
   },
 
   async update(
@@ -44,13 +46,13 @@ export const promptRepository = {
     const db = await getDb()
     const existing = await db.get('prompts', id)
     if (!existing) throw new PromptNotFoundError(id)
-    const updated: Prompt = {
+    const updated = PromptSchema.parse({
       ...existing,
       ...data,
       id,
       createdAt: existing.createdAt,
       updatedAt: new Date().toISOString(),
-    }
+    })
     const tx = db.transaction(['prompts', 'promptImageAssets'], 'readwrite')
     await tx.objectStore('prompts').put(updated)
     if (existing.imageAssetId && existing.imageAssetId !== updated.imageAssetId) {
@@ -79,14 +81,14 @@ export const promptRepository = {
   async bulkImport(prompts: Prompt[]): Promise<void> {
     const db = await getDb()
     const tx = db.transaction('prompts', 'readwrite')
-    await Promise.all([...prompts.map((p) => tx.store.put(p)), tx.done])
+    await Promise.all([...prompts.map((p) => tx.store.put(PromptSchema.parse(p))), tx.done])
   },
 
   async bulkImportWithAssets(prompts: Prompt[], assets: PromptImageAsset[]): Promise<void> {
     const db = await getDb()
     const tx = db.transaction(['prompts', 'promptImageAssets'], 'readwrite')
     await Promise.all([
-      ...prompts.map((p) => tx.objectStore('prompts').put(p)),
+      ...prompts.map((p) => tx.objectStore('prompts').put(PromptSchema.parse(p))),
       ...assets.map((asset) => tx.objectStore('promptImageAssets').put(asset)),
       tx.done,
     ])

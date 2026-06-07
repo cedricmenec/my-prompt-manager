@@ -34,13 +34,14 @@ import { Modal } from '@/shared/ui/Modal'
 import { ToastContainer } from '@/shared/ui/Toast'
 import { useToast } from '@/shared/ui/useToast'
 import { ApiModelsSettingsView } from './ApiModelsSettingsView'
+import { AiFeaturesSettingsView } from './AiFeaturesSettingsView'
 
 interface SettingsPanelProps {
   onClose: () => void
 }
 
 type ImportSource = 'local' | 'drive' | 'snapshot'
-type SettingsSection = 'legacy' | 'api-models'
+type SettingsSection = 'legacy' | 'api-models' | 'ai-features'
 
 export function SettingsPanel({ onClose }: SettingsPanelProps) {
   const { state, dispatch } = usePrompts()
@@ -291,14 +292,14 @@ export function SettingsPanel({ onClose }: SettingsPanelProps) {
   return (
     <>
       <div
-        className="fixed inset-0 z-40 flex items-center justify-center overflow-y-auto bg-black/50 p-4"
+        className="fixed inset-0 z-40 flex items-center justify-center overflow-hidden bg-black/50 p-4"
         onClick={onClose}
       >
         <div
           role="dialog"
           aria-modal="true"
           aria-label="Settings"
-          className="relative max-h-[92vh] w-full max-w-5xl overflow-y-auto rounded-xl bg-surface p-6 shadow-xl"
+          className="relative grid h-[min(42rem,92vh)] w-full max-w-5xl grid-rows-[auto_1fr] overflow-hidden rounded-xl bg-surface p-6 shadow-xl"
           onClick={(e) => e.stopPropagation()}
         >
           <div className="mb-6 flex items-center justify-between">
@@ -312,14 +313,20 @@ export function SettingsPanel({ onClose }: SettingsPanelProps) {
             </button>
           </div>
 
-          <div className="grid gap-6 md:grid-cols-[12rem_1fr]">
-            <nav className="flex gap-2 overflow-x-auto border-b border-border pb-3 md:flex-col md:border-b-0 md:border-r md:pb-0 md:pr-4" aria-label="Settings categories">
+          <div className="grid min-h-0 gap-6 md:grid-cols-[12rem_1fr]">
+            <nav className="flex gap-2 overflow-x-auto border-b border-border pb-3 md:flex-col md:overflow-y-auto md:border-b-0 md:border-r md:pb-0 md:pr-4" aria-label="Settings categories">
               <button
                 type="button"
                 onClick={() => setActiveSection('legacy')}
                 className={`rounded-lg px-3 py-2 text-left text-sm font-medium ${activeSection === 'legacy' ? 'bg-surface-muted text-text-heading' : 'text-text hover:bg-surface-muted'}`}
               >
                 Legacy
+              </button>              <button
+                type="button"
+                onClick={() => setActiveSection('ai-features')}
+                className={`rounded-lg px-3 py-2 text-left text-sm font-medium ${activeSection === 'ai-features' ? 'bg-surface-muted text-text-heading' : 'text-text hover:bg-surface-muted'}`}
+              >
+                AI Features
               </button>
               <button
                 type="button"
@@ -330,7 +337,8 @@ export function SettingsPanel({ onClose }: SettingsPanelProps) {
               </button>
             </nav>
 
-            <div className={activeSection === 'legacy' ? 'block' : 'hidden'}>
+            {activeSection === 'legacy' && (
+            <div className="block min-h-0 overflow-y-auto pr-1">
           <section className="mb-6">
             <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-text">Data</h3>
             <div className="flex flex-wrap gap-3">
@@ -471,10 +479,19 @@ export function SettingsPanel({ onClose }: SettingsPanelProps) {
             </div>
           </section>
             </div>
+            )}
 
-            <div className={activeSection === 'api-models' ? 'block' : 'hidden'}>
+            {activeSection === 'ai-features' && (
+            <div className="block min-h-0 overflow-y-auto pr-1">
+              <AiFeaturesSettingsView />
+            </div>
+            )}
+
+            {activeSection === 'api-models' && (
+            <div className="block min-h-0 overflow-y-auto pr-1">
               <ApiModelsSettingsView />
             </div>
+            )}
           </div>
         </div>
       </div>

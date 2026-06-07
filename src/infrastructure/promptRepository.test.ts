@@ -3,6 +3,7 @@ import 'fake-indexeddb/auto' // sets up all IDB class globals
 import { IDBFactory } from 'fake-indexeddb'
 import { promptRepository, PromptNotFoundError } from './promptRepository'
 import { initDb, resetDb } from './db'
+import { runDataMigrations } from './dataMigrations'
 
 const baseData = {
   title: 'Test Prompt',
@@ -213,9 +214,9 @@ describe('promptRepository.deleteAll', () => {
 })
 
 describe('DB_VERSION and _meta store', () => {
-  it('DB_VERSION is 5', async () => {
+  it('DB_VERSION is 6', async () => {
     const { DB_VERSION } = await import('./db')
-    expect(DB_VERSION).toBe(5)
+    expect(DB_VERSION).toBe(6)
   })
 
   it('_meta store exists after initDb()', async () => {
@@ -226,6 +227,34 @@ describe('DB_VERSION and _meta store', () => {
   it('promptImageAssets store exists after initDb()', async () => {
     const db = await initDb()
     expect(db.objectStoreNames.contains('promptImageAssets')).toBe(true)
+  })
+
+  it('removes legacy prompt model fields during data migration', async () => {
+    const db = await initDb()
+    const now = new Date().toISOString()
+    const legacyPrompt = {
+      id: crypto.randomUUID(),
+      title: 'Legacy prompt',
+      content: 'Legacy content',
+      tags: [],
+      isFavorite: false,
+      type: 'text' as const,
+      model: 'gpt-4o',
+      createdAt: now,
+      updatedAt: now,
+    }
+    await db.put('prompts', legacyPrompt as never)
+    await db.put('_meta', { key: 'schemaVersion', value: 1 })
+
+    await runDataMigrations(db)
+
+    const stored = await db.get('prompts', legacyPrompt.id)
+    expect((stored as unknown as Record<string, unknown>).model).toBeUndefined()
+  })
+
+  it('aiFeatureSettings store exists after initDb()', async () => {
+    const db = await initDb()
+    expect(db.objectStoreNames.contains('aiFeatureSettings')).toBe(true)
   })
 
   it('_meta contains schemaVersion after initDb()', async () => {

@@ -1,6 +1,6 @@
-import { getDb, type AiProviderConnection, type AiProviderModel, type EnabledAiModel } from './db'
+import { getDb, type AiFeatureId, type AiFeatureSettings, type AiProviderConnection, type AiProviderModel, type EnabledAiModel } from './db'
 
-export type { AiProviderConnection, AiProviderModel, EnabledAiModel } from './db'
+export type { AiFeatureId, AiFeatureSettings, AiProviderConnection, AiProviderModel, EnabledAiModel } from './db'
 
 function enabledModelKey(providerId: string, modelId: string): string {
   return `${providerId}:${modelId}`
@@ -63,6 +63,42 @@ export const aiProviderSettingsRepository = {
   async getEnabledModelIds(providerId: string): Promise<Set<string>> {
     const enabled = await this.listEnabledModels(providerId)
     return new Set(enabled.map((model) => model.modelId))
+  },
+
+  async listEnabledProviderModels(providerId: string): Promise<AiProviderModel[]> {
+    const [models, enabledIds] = await Promise.all([
+      this.listProviderModels(providerId),
+      this.getEnabledModelIds(providerId),
+    ])
+    return models.filter((model) => enabledIds.has(model.id))
+  },
+
+  async getFeatureSettings(featureId: AiFeatureId): Promise<AiFeatureSettings | undefined> {
+    const db = await getDb()
+    return db.get('aiFeatureSettings', featureId)
+  },
+
+  async saveFeatureSettings(
+    featureId: AiFeatureId,
+    data: Pick<AiFeatureSettings, 'providerId' | 'modelId'>,
+  ): Promise<AiFeatureSettings> {
+    const db = await getDb()
+    const existing = await db.get('aiFeatureSettings', featureId)
+    const now = new Date().toISOString()
+    const settings: AiFeatureSettings = {
+      featureId,
+      providerId: data.providerId,
+      modelId: data.modelId,
+      createdAt: existing?.createdAt ?? now,
+      updatedAt: now,
+    }
+    await db.put('aiFeatureSettings', settings)
+    return settings
+  },
+
+  async deleteFeatureSettings(featureId: AiFeatureId): Promise<void> {
+    const db = await getDb()
+    await db.delete('aiFeatureSettings', featureId)
   },
 
   async setEnabledModels(providerId: string, modelIds: string[]): Promise<void> {

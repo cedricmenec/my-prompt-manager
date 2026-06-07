@@ -1,7 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { parseImportFile, ImportFormatError, exportPromptsToJson } from './importExport'
+import { parseImportFile, ImportFormatError, exportPromptsToJson, createPromptExportEnvelope } from './importExport'
 import { DATA_SCHEMA_VERSION } from './dataMigrations'
 import { promptRepository } from './promptRepository'
+import type { Prompt } from '@/domain/promptSchema'
 
 // Helper: create a File from a JS value
 function makeJsonFile(content: unknown): File {
@@ -21,7 +22,7 @@ const validPrompt = {
   content: 'Hello',
   tags: [],
   isFavorite: false,
-  type: 'text',
+  type: 'text' as const,
   createdAt: now,
   updatedAt: now,
 }
@@ -111,10 +112,28 @@ describe('parseImportFile', () => {
       promptCount: 1,
       prompts: [validPrompt],
     })
-    // schemaVersion 1 == DATA_SCHEMA_VERSION (1), so no migration warning
     const result = await parseImportFile(file)
     expect(result.valid).toHaveLength(1)
-    expect(result.migrationWarning).toBeUndefined()
+    if (DATA_SCHEMA_VERSION > 1) {
+      expect(result.migrationWarning).toBeTruthy()
+    } else {
+      expect(result.migrationWarning).toBeUndefined()
+    }
+  })
+
+  it('strips legacy model values from imported prompts', async () => {
+    const file = makeJsonFile({
+      schemaVersion: DATA_SCHEMA_VERSION,
+      appVersion: '0.1.0',
+      exportedAt: now,
+      promptCount: 1,
+      prompts: [{ ...validPrompt, model: 'gpt-4o' }],
+    })
+
+    const result = await parseImportFile(file)
+
+    expect(result.valid).toHaveLength(1)
+    expect((result.valid[0] as Record<string, unknown>).model).toBeUndefined()
   })
 
   it('sets migrationWarning when file has older schemaVersion', async () => {
@@ -178,6 +197,26 @@ describe('parseImportFile', () => {
     expect(result.valid).toHaveLength(1)
     expect(result.imageAssets).toHaveLength(0)
     expect(result.errors.some((error) => error.reason.includes('Image asset'))).toBe(true)
+  })
+})
+
+describe('createPromptExportEnvelope', () => {
+  it('does not include session API keys in export payloads', async () => {
+    localStorage.setItem('apiKey', 'sk-or-secret')
+
+    const envelope = await createPromptExportEnvelope([validPrompt])
+
+    expect(JSON.stringify(envelope)).not.toContain('sk-or-secret')
+    localStorage.removeItem('apiKey')
+  })
+
+  it('omits legacy model values from exported prompt records', async () => {
+    const envelope = await createPromptExportEnvelope([
+      { ...validPrompt, model: 'gpt-4o' } as Prompt & { model: string },
+    ])
+
+    expect(JSON.stringify(envelope.prompts)).not.toContain('gpt-4o')
+    expect((envelope.prompts[0] as Record<string, unknown>).model).toBeUndefined()
   })
 })
 

@@ -13,6 +13,9 @@ import { Modal } from '@/shared/ui/Modal'
 import { ToastContainer } from '@/shared/ui/Toast'
 import { useToast } from '@/shared/ui/useToast'
 import { usePromptImageSource } from './usePromptImageSource'
+import { generatePromptField } from '@/application/promptFieldGenerationService'
+import type { PromptGeneratedFieldId } from '@/domain/promptGeneratedFields'
+import { redactApiSecrets } from '@/infrastructure/secretRedaction'
 
 // ---------------------------------------------------------------------------
 // Preserve leading whitespace (spaces/tabs) in Markdown rendering.
@@ -108,6 +111,7 @@ interface FormErrors {
   title?: string
   content?: string
   image?: string
+  assistant?: string
 }
 
 interface PendingImageAttachment {
@@ -143,8 +147,7 @@ export function PromptView() {
   const [content, setContent] = useState(prompt?.content ?? '')
   const [description, setDescription] = useState(prompt?.description ?? '')
   const [tags, setTags] = useState<string[]>(prompt?.tags ?? [])
-  const [notes, setNotes] = useState(prompt?.notes ?? '')
-  const [model, setModel] = useState(prompt?.model ?? '')
+  const [notes, setNotes] = useState(prompt?.notes ?? '')
   const [imageUrl, setImageUrl] = useState(prompt?.imageUrl ?? '')
   const [imageAssetId, setImageAssetId] = useState(prompt?.imageAssetId ?? '')
   const [pendingImage, setPendingImage] = useState<PendingImageAttachment | null>(null)
@@ -155,6 +158,8 @@ export function PromptView() {
   )
   const [errors, setErrors] = useState<FormErrors>({})
   const [submitting, setSubmitting] = useState(false)
+  const [generatingField, setGeneratingField] = useState<PromptGeneratedFieldId | null>(null)
+  const generationAbortRef = useRef<AbortController | null>(null)
   const imageInputRef = useRef<HTMLInputElement>(null)
   const readImage = usePromptImageSource(prompt)
 
@@ -163,8 +168,7 @@ export function PromptView() {
     setContent(prompt?.content ?? '')
     setDescription(prompt?.description ?? '')
     setTags(prompt?.tags ?? [])
-    setNotes(prompt?.notes ?? '')
-    setModel(prompt?.model ?? '')
+    setNotes(prompt?.notes ?? '')
     setImageUrl(prompt?.imageUrl ?? '')
     setImageAssetId(prompt?.imageAssetId ?? '')
     setPendingImage(null)
@@ -177,8 +181,7 @@ export function PromptView() {
     prompt?.content,
     prompt?.description,
     prompt?.tags,
-    prompt?.notes,
-    prompt?.model,
+    prompt?.notes,
     prompt?.imageUrl,
     prompt?.imageAssetId,
     prompt?.type,
@@ -332,8 +335,7 @@ export function PromptView() {
         content: content.trim(),
         description: description.trim() || undefined,
         tags,
-        notes: notes.trim() || undefined,
-        model: model.trim() || undefined,
+        notes: notes.trim() || undefined,
         imageUrl: imageUrl.trim() || undefined,
         imageAssetId: pendingImage ? (prompt?.imageAssetId ?? undefined) : imageAssetId || undefined,
         temperature: tempValue,
@@ -405,8 +407,7 @@ export function PromptView() {
       setContent(prompt?.content ?? '')
       setDescription(prompt?.description ?? '')
       setTags(prompt?.tags ?? [])
-      setNotes(prompt?.notes ?? '')
-      setModel(prompt?.model ?? '')
+      setNotes(prompt?.notes ?? '')
       setImageUrl(prompt?.imageUrl ?? '')
       setImageAssetId(prompt?.imageAssetId ?? '')
       setPendingImage(null)
@@ -416,6 +417,38 @@ export function PromptView() {
       setIsEditing(false)
     }
   }
+  async function handleGenerateField(fieldId: PromptGeneratedFieldId) {
+    if (generatingField) return
+    generationAbortRef.current?.abort()
+    const controller = new AbortController()
+    generationAbortRef.current = controller
+    setGeneratingField(fieldId)
+    setErrors((current) => clearFormError(current, 'assistant'))
+    try {
+      const generated = await generatePromptField({ fieldId, content, signal: controller.signal })
+      if (fieldId === 'title') {
+        setTitle(generated)
+        setErrors((current) => clearFormError(current, 'title'))
+      } else {
+        setDescription(generated)
+      }
+      const generatedLabel = fieldId === 'title' ? 'Title' : 'Description'
+      showToast(generatedLabel + ' generated. Review it before saving.', 'success')
+    } catch (error) {
+      const message = error instanceof Error ? redactApiSecrets(error.message) : 'Prompt field generation failed.'
+      setErrors((current) => ({ ...current, assistant: message }))
+      showToast(message, 'error')
+    } finally {
+      if (generationAbortRef.current === controller) {
+        generationAbortRef.current = null
+      }
+      setGeneratingField(null)
+    }
+  }
+
+  useEffect(() => {
+    return () => generationAbortRef.current?.abort()
+  }, [])
 
   // ---------------------------------------------------------------------------
   // Read mode render
@@ -595,9 +628,21 @@ export function PromptView() {
             <form id="prompt-edit-form" onSubmit={handleSave} noValidate className="space-y-5">
               {/* Title */}
               <div>
-                <label className="block text-sm font-medium text-text-heading mb-1">
-                  Title <span className="text-red-500">*</span>
-                </label>
+                <div className="mb-1 flex items-center gap-2">
+                  <label className="block text-sm font-medium text-text-heading">
+                    Title <span className="text-red-500">*</span>
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => void handleGenerateField('title')}
+                    disabled={generatingField !== null}
+                    title="Generate title from prompt content"
+                    aria-label="Generate title from prompt content"
+                    className="inline-flex h-7 w-7 items-center justify-center rounded-md border border-border text-xs font-semibold text-text-heading hover:bg-surface-muted disabled:opacity-50"
+                  >
+                    AI
+                  </button>
+                </div>
                 <input
                   type="text"
                   value={title}
@@ -610,7 +655,19 @@ export function PromptView() {
 
               {/* Description */}
               <div>
-                <label className="block text-sm font-medium text-text-heading mb-1">Description</label>
+                <div className="mb-1 flex items-center gap-2">
+                  <label className="block text-sm font-medium text-text-heading">Description</label>
+                  <button
+                    type="button"
+                    onClick={() => void handleGenerateField('description')}
+                    disabled={generatingField !== null}
+                    title="Generate description from prompt content"
+                    aria-label="Generate description from prompt content"
+                    className="inline-flex h-7 w-7 items-center justify-center rounded-md border border-border text-xs font-semibold text-text-heading hover:bg-surface-muted disabled:opacity-50"
+                  >
+                    AI
+                  </button>
+                </div>
                 <textarea
                   rows={3}
                   value={description}
@@ -694,7 +751,7 @@ export function PromptView() {
 
               {/* Image URL */}
               <div>
-                <label className="block text-sm font-medium text-text-heading mb-1">Image de référence (URL)</label>
+                <label className="block text-sm font-medium text-text-heading mb-1">Reference image URL</label>
                 <input
                   type="text"
                   value={imageUrl}
@@ -744,32 +801,21 @@ export function PromptView() {
                 />
               </div>
 
-              {/* Model + Temperature */}
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-text-heading mb-1">Model</label>
-                  <input
-                    type="text"
-                    value={model}
-                    onChange={(e) => setModel(e.target.value)}
-                    className="w-full rounded-md border border-border bg-surface px-3 py-1.5 text-sm text-text-heading focus:border-primary focus:outline-none"
-                    placeholder="e.g. gpt-4o (optional)"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-text-heading mb-1">Temperature</label>
-                  <input
-                    type="number"
-                    value={temperature}
-                    onChange={(e) => setTemperature(e.target.value)}
-                    min={0}
-                    max={2}
-                    step={0.1}
-                    className="w-full rounded-md border border-border bg-surface px-3 py-1.5 text-sm text-text-heading focus:border-primary focus:outline-none"
-                    placeholder="0–2 (optional)"
-                  />
-                </div>
+              {/* Temperature */}
+              <div>
+                <label className="block text-sm font-medium text-text-heading mb-1">Temperature</label>
+                <input
+                  type="number"
+                  value={temperature}
+                  onChange={(e) => setTemperature(e.target.value)}
+                  min={0}
+                  max={2}
+                  step={0.1}
+                  className="w-full rounded-md border border-border bg-surface px-3 py-1.5 text-sm text-text-heading focus:border-primary focus:outline-none"
+                  placeholder="0-2 (optional)"
+                />
               </div>
+              {errors.assistant && <p className="text-xs text-red-600">{errors.assistant}</p>}
             </form>
           </div>
         </div>

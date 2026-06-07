@@ -23,12 +23,21 @@ describe('PromptSchema', () => {
       ...validPrompt,
       description: 'A creative writing prompt',
       tags: ['creative', 'fiction'],
-      model: 'gpt-4o',
       temperature: 0.8,
       imageUrl: 'https://example.com/image.png',
       imageAssetId: 'local-image-asset',
     })
     expect(result.success).toBe(true)
+  })
+
+  it('strips legacy model metadata from parsed prompts', () => {
+    const result = PromptSchema.safeParse({
+      ...validPrompt,
+    })
+    expect(result.success).toBe(true)
+    if (result.success) {
+      expect('model' in result.data).toBe(false)
+    }
   })
 
   it('accepts an image prompt with a local image asset reference', () => {

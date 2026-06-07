@@ -51,6 +51,22 @@ Some content.
     expect(result.error).not.toBeNull()
   })
 
+  it('accepts and strips legacy model frontmatter', () => {
+    const legacy = `---
+id: 550e8400-e29b-41d4-a716-446655440000
+title: My Prompt
+model: gpt-4o
+createdAt: '2026-01-01T00:00:00.000Z'
+updatedAt: '2026-01-01T00:00:00.000Z'
+---
+Content here.
+`
+    const result = parseMarkdown(legacy)
+    expect(result.error).toBeNull()
+    expect(result.data).not.toBeNull()
+    expect((result.data as Record<string, unknown>)['model']).toBeUndefined()
+  })
+
   it('strips unknown extra fields (Zod strip mode)', () => {
     const withExtra = `---
 id: 550e8400-e29b-41d4-a716-446655440000
@@ -92,6 +108,15 @@ describe('serializeMarkdown', () => {
     const parsed = parseMarkdown(serialized)
     expect(parsed.error).toBeNull()
     expect(parsed.data?.notes).toBe('Line one.\nLine two.\nLine three.')
+  })
+
+  it('omits legacy model when serializing', () => {
+    const serialized = serializeMarkdown({
+      ...validPrompt,
+      model: 'gpt-4o',
+    } as Prompt & { model: string })
+
+    expect(serialized).not.toContain('model:')
   })
 
   it('preserves imageUrl and omits local image binary payloads', () => {

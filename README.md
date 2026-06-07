@@ -8,7 +8,7 @@ All data stays in your browser. No server. No account needed.
 This app helps you manage a personal library of prompts for AI tools (ChatGPT, Claude, etc.).
 
 - Write and edit prompts in Markdown
-- Add tags, description, model hint, and temperature
+- Add tags, description, notes, image references, and temperature
 - All data is stored in your browser (IndexedDB) — nothing is sent to a server
 - Works offline after the first load
 
@@ -67,6 +67,14 @@ Open [http://localhost:5173](http://localhost:5173) in your browser.
 3. Click **Save** — the prompt appears in the list.
 4. Click any prompt card to open the detail panel.
 5. Use **Edit** to change a prompt, **Copy** to copy content to clipboard, or **Delete** to remove it.
+
+## AI assistant and BYOK keys
+
+Settings includes **API & Models** for loading an OpenRouter model catalog with your own API key and enabling models for app features. The key is kept in memory for the current browser session only; it is not saved to localStorage, IndexedDB, JSON exports, Drive exports, or Drive snapshots. A page reload clears it.
+
+Settings also includes **AI Features**. The first feature, **Prompt input assistant**, stores only a non-sensitive provider/model selection and can generate a prompt title or description from the current prompt content. Generation is explicit: prompt content is sent to OpenRouter only when you click an AI generation control in edit mode. Generated values update the edit form and are saved only when you click **Save**.
+
+Prompt records no longer include a prompt-level `model` field. Legacy imports or Markdown frontmatter that contain `model` are accepted, but the field is stripped and future exports omit it.
 
 ## Google Drive import, export, and snapshots
 

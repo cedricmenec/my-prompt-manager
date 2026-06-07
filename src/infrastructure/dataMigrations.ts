@@ -16,14 +16,31 @@ export type DataMigration = {
 // ---------------------------------------------------------------------------
 
 /** Current data schema version. Increment when adding a new data migration. */
-export const DATA_SCHEMA_VERSION = 1
+export const DATA_SCHEMA_VERSION = 2
 
 // ---------------------------------------------------------------------------
 // Registry
 // ---------------------------------------------------------------------------
 
 /** All data migrations, ordered by version ascending. */
-export const dataMigrations: DataMigration[] = []
+export const dataMigrations: DataMigration[] = [
+  {
+    version: 2,
+    description: 'Remove legacy prompt-level model metadata.',
+    async migrate(db) {
+      const tx = db.transaction('prompts', 'readwrite')
+      const store = tx.objectStore('prompts')
+      const prompts = await store.getAll()
+      await Promise.all(
+        prompts.map((prompt) => {
+          const { model: _model, ...withoutModel } = prompt as typeof prompt & { model?: unknown }
+          return store.put(withoutModel)
+        }),
+      )
+      await tx.done
+    },
+  },
+]
 
 // ---------------------------------------------------------------------------
 // Runner

@@ -3,6 +3,7 @@ import { AI_PROVIDER_DEFINITIONS, SUPPORTED_AI_PROVIDER_ID } from '@/infrastruct
 import { aiProviderSettingsRepository } from '@/infrastructure/aiProviderSettingsRepository'
 import type { AiProviderModel } from '@/infrastructure/db'
 import { fetchOpenRouterModels, OpenRouterModelsError } from '@/infrastructure/openRouterModelsClient'
+import { sessionCredentials } from '@/infrastructure/sessionCredentials'
 
 type LoadState = 'idle' | 'loading' | 'success' | 'validation-error' | 'provider-error'
 
@@ -53,6 +54,7 @@ export function ApiModelsSettingsView() {
     setLoadState('loading')
     setMessage('Loading OpenRouter models...')
     try {
+      sessionCredentials.setApiKey('openrouter', apiKey)
       const fetchedModels = await fetchOpenRouterModels(apiKey)
       await aiProviderSettingsRepository.replaceProviderModels(selectedProviderId, fetchedModels, new Date().toISOString())
       const enabledIds = await aiProviderSettingsRepository.getEnabledModelIds(selectedProviderId)
@@ -112,7 +114,7 @@ export function ApiModelsSettingsView() {
         <div className="mb-3 flex items-start justify-between gap-3">
           <div>
             <h3 className="text-sm font-medium text-text-heading">OpenRouter key</h3>
-            <p className="mt-1 text-xs text-text">The key stays in memory for this settings session only.</p>
+            <p className="mt-1 text-xs text-text">The key stays in memory for this browser session only and is cleared on reload.</p>
           </div>
           {selectedProvider?.apiKeyUrl && (
             <a className="text-xs font-medium text-primary hover:underline" href={selectedProvider.apiKeyUrl} target="_blank" rel="noreferrer">
@@ -126,7 +128,10 @@ export function ApiModelsSettingsView() {
             <input
               type="password"
               value={apiKey}
-              onChange={(event) => setApiKey(event.target.value)}
+              onChange={(event) => {
+                setApiKey(event.target.value)
+                sessionCredentials.setApiKey('openrouter', event.target.value)
+              }}
               className="rounded-md border border-border bg-surface px-3 py-2 text-sm text-text"
               placeholder="sk-or-..."
               autoComplete="off"

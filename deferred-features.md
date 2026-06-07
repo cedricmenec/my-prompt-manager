@@ -40,3 +40,14 @@ Features deliberately scoped out of the `manual-import-export` change.
 **Deferred follow-up**: Encrypted Vault persistence for API keys is intentionally deferred. Persistent BYOK secrets must not be offered until a local encrypted vault stores sensitive material with a user-controlled passphrase and keeps decrypted keys in memory only.
 
 **Why deferred**: This change establishes provider/model selection without persisting raw API keys. Storing API keys in clear text in localStorage or IndexedDB would violate the local-first BYOK security model.
+
+
+---
+
+## Editable prompt input assistant system prompts
+
+**Description**: Add a UI for viewing, editing, versioning, and restoring the system prompts used by the Prompt input assistant for title and description generation.
+
+**Deferred follow-up**: The current implementation keeps title and description generation prompts in an isolated hardcoded module. Future work should let users inspect the active prompt, create revisions, restore defaults, and possibly scope variants per AI feature or model.
+
+**Why deferred**: Editable generation instructions require versioning UX, validation, reset behavior, and import/export semantics. Hardcoded isolated prompts are sufficient for the first explicit generation workflow.

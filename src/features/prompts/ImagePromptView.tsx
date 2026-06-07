@@ -128,14 +128,6 @@ export function ImagePromptView() {
           </div>
         )}
 
-        {/* Model */}
-        {prompt.model && (
-          <div className="mt-4">
-            <p className="mb-1 text-xs font-semibold uppercase tracking-wider text-text">Model</p>
-            <p className="text-sm text-text-heading">{prompt.model}</p>
-          </div>
-        )}
-
         {/* Notes */}
         {prompt.notes && (
           <div className="mt-4">
