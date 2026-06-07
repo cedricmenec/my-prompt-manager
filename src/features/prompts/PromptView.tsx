@@ -12,6 +12,7 @@ import { MarkdownEditor } from '@/shared/ui/MarkdownEditor'
 import { Modal } from '@/shared/ui/Modal'
 import { ToastContainer } from '@/shared/ui/Toast'
 import { useToast } from '@/shared/ui/useToast'
+import { MagicInput } from '@/shared/ui/MagicInput'
 import { usePromptImageSource } from './usePromptImageSource'
 import { generatePromptField } from '@/application/promptFieldGenerationService'
 import type { PromptGeneratedFieldId } from '@/domain/promptGeneratedFields'
@@ -147,7 +148,8 @@ export function PromptView() {
   const [content, setContent] = useState(prompt?.content ?? '')
   const [description, setDescription] = useState(prompt?.description ?? '')
   const [tags, setTags] = useState<string[]>(prompt?.tags ?? [])
-  const [notes, setNotes] = useState(prompt?.notes ?? '')
+  const [notes, setNotes] = useState(prompt?.notes ?? '')
+
   const [imageUrl, setImageUrl] = useState(prompt?.imageUrl ?? '')
   const [imageAssetId, setImageAssetId] = useState(prompt?.imageAssetId ?? '')
   const [pendingImage, setPendingImage] = useState<PendingImageAttachment | null>(null)
@@ -168,7 +170,8 @@ export function PromptView() {
     setContent(prompt?.content ?? '')
     setDescription(prompt?.description ?? '')
     setTags(prompt?.tags ?? [])
-    setNotes(prompt?.notes ?? '')
+    setNotes(prompt?.notes ?? '')
+
     setImageUrl(prompt?.imageUrl ?? '')
     setImageAssetId(prompt?.imageAssetId ?? '')
     setPendingImage(null)
@@ -181,7 +184,8 @@ export function PromptView() {
     prompt?.content,
     prompt?.description,
     prompt?.tags,
-    prompt?.notes,
+    prompt?.notes,
+
     prompt?.imageUrl,
     prompt?.imageAssetId,
     prompt?.type,
@@ -335,7 +339,8 @@ export function PromptView() {
         content: content.trim(),
         description: description.trim() || undefined,
         tags,
-        notes: notes.trim() || undefined,
+        notes: notes.trim() || undefined,
+
         imageUrl: imageUrl.trim() || undefined,
         imageAssetId: pendingImage ? (prompt?.imageAssetId ?? undefined) : imageAssetId || undefined,
         temperature: tempValue,
@@ -407,7 +412,8 @@ export function PromptView() {
       setContent(prompt?.content ?? '')
       setDescription(prompt?.description ?? '')
       setTags(prompt?.tags ?? [])
-      setNotes(prompt?.notes ?? '')
+      setNotes(prompt?.notes ?? '')
+
       setImageUrl(prompt?.imageUrl ?? '')
       setImageAssetId(prompt?.imageAssetId ?? '')
       setPendingImage(null)
@@ -628,26 +634,14 @@ export function PromptView() {
             <form id="prompt-edit-form" onSubmit={handleSave} noValidate className="space-y-5">
               {/* Title */}
               <div>
-                <div className="mb-1 flex items-center gap-2">
-                  <label className="block text-sm font-medium text-text-heading">
-                    Title <span className="text-red-500">*</span>
-                  </label>
-                  <button
-                    type="button"
-                    onClick={() => void handleGenerateField('title')}
-                    disabled={generatingField !== null}
-                    title="Generate title from prompt content"
-                    aria-label="Generate title from prompt content"
-                    className="inline-flex h-7 w-7 items-center justify-center rounded-md border border-border text-xs font-semibold text-text-heading hover:bg-surface-muted disabled:opacity-50"
-                  >
-                    AI
-                  </button>
-                </div>
-                <input
-                  type="text"
+                <label className="block mb-1 text-sm font-medium text-text-heading">
+                  Title <span className="text-red-500">*</span>
+                </label>
+                <MagicInput
                   value={title}
                   onChange={(e) => { setTitle(e.target.value); setErrors((current) => clearFormError(current, 'title')) }}
-                  className="w-full rounded-md border border-border bg-surface px-3 py-1.5 text-sm text-text-heading focus:border-primary focus:outline-none"
+                  onMagicAction={() => void handleGenerateField('title')}
+                  isGenerating={generatingField === 'title'}
                   placeholder="Prompt title"
                 />
                 {errors.title && <p className="mt-1 text-xs text-red-600">{errors.title}</p>}
@@ -655,24 +649,13 @@ export function PromptView() {
 
               {/* Description */}
               <div>
-                <div className="mb-1 flex items-center gap-2">
-                  <label className="block text-sm font-medium text-text-heading">Description</label>
-                  <button
-                    type="button"
-                    onClick={() => void handleGenerateField('description')}
-                    disabled={generatingField !== null}
-                    title="Generate description from prompt content"
-                    aria-label="Generate description from prompt content"
-                    className="inline-flex h-7 w-7 items-center justify-center rounded-md border border-border text-xs font-semibold text-text-heading hover:bg-surface-muted disabled:opacity-50"
-                  >
-                    AI
-                  </button>
-                </div>
-                <textarea
-                  rows={3}
+                <label className="block mb-1 text-sm font-medium text-text-heading">Description</label>
+                <MagicInput
+                  variant="multi"
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
-                  className="w-full rounded-md border border-border bg-surface px-3 py-1.5 text-sm text-text-heading focus:border-primary focus:outline-none resize-y"
+                  onMagicAction={() => void handleGenerateField('description')}
+                  isGenerating={generatingField === 'description'}
                   placeholder="Short description (optional)"
                 />
               </div>

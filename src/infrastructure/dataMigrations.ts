@@ -54,9 +54,18 @@ export async function runDataMigrations(db: IDBPDatabase<PromptDB>): Promise<voi
     .filter((m) => m.version > currentVersion)
     .sort((a, b) => a.version - b.version)
 
+  if (pending.length === 0) {
+    console.log(`[DataMigration] No pending migrations (schemaVersion=${currentVersion})`)
+  } else {
+    console.log(`[DataMigration] Running ${pending.length} migration(s) from v${currentVersion} to v${DATA_SCHEMA_VERSION}`)
+  }
+
   for (const migration of pending) {
+    console.log(`[DataMigration] Running v${migration.version}: ${migration.description}`)
     await migration.migrate(db)
+    console.log(`[DataMigration] ✓ v${migration.version} complete`)
   }
 
   await db.put('_meta', { key: 'schemaVersion', value: DATA_SCHEMA_VERSION })
+  console.log(`[DataMigration] schemaVersion updated to ${DATA_SCHEMA_VERSION}`)
 }

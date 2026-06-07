@@ -103,24 +103,24 @@ In read mode, `PromptView` SHALL display the prompt fields in order:
 ---
 
 ### Requirement: PromptView edit mode provides AI field generation controls
-PromptView edit mode SHALL render small, icon-style magic-wand generation controls next to the `Title` and `Description` field labels. Each control SHALL generate only its associated field from the current prompt `content` value and update the edit form without saving the prompt automatically.
+PromptView edit mode SHALL use the reusable `MagicInput` component for the `Title` and `Description` fields. The `Title` field SHALL use `MagicInput` with `variant="single"`. The `Description` field SHALL use `MagicInput` with `variant="multi"`. Each `MagicInput` SHALL trigger generation of only its associated field from the current prompt `content` value and update the edit form without saving the prompt automatically.
 
-#### Scenario: Title magic-wand button generates title
-- **WHEN** the user clicks the magic-wand control next to `Title`
+#### Scenario: Title MagicInput generates title
+- **WHEN** the user clicks the magic-wand icon in the Title `MagicInput`
 - **THEN** the system generates a title from the current prompt content
 - **AND** updates the title input with the generated value
 - **AND** does not persist the prompt until the user clicks `Save`
 
-#### Scenario: Description magic-wand button generates description
-- **WHEN** the user clicks the magic-wand control next to `Description`
+#### Scenario: Description MagicInput generates description
+- **WHEN** the user clicks the magic-wand icon in the Description `MagicInput`
 - **THEN** the system generates a description from the current prompt content
 - **AND** updates the description textarea with the generated value
 - **AND** does not persist the prompt until the user clicks `Save`
 
-#### Scenario: Generation button shows progress
-- **WHEN** field generation is in progress
-- **THEN** the corresponding magic-wand control is disabled or shows a loading state
-- **AND** repeated clicks do not start duplicate provider calls for the same field
+#### Scenario: MagicInput shows pulsing animation during generation
+- **WHEN** field generation is in progress for a given field
+- **THEN** the corresponding `MagicInput` icon pulses with a subtle color shift animation
+- **AND** the icon is disabled to prevent duplicate generation requests
 
 #### Scenario: Generation failure preserves current edit values
 - **WHEN** field generation fails

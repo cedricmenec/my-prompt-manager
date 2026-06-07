@@ -78,7 +78,9 @@ describe('PromptView AI field generation', () => {
     vi.mocked(generatePromptField).mockResolvedValue('Generated title')
     render(<PromptView />)
 
-    fireEvent.click(screen.getByLabelText('Generate title from prompt content'))
+    // MagicInput uses a shared aria-label — first occurrence is the title magic button
+    const magicButtons = screen.getAllByRole('button', { name: 'Generate with AI' })
+    fireEvent.click(magicButtons[0])
 
     await waitFor(() => expect(screen.getByDisplayValue('Generated title')).toBeTruthy())
     expect(generatePromptField).toHaveBeenCalledWith(expect.objectContaining({ fieldId: 'title', content: 'Original content' }))
@@ -89,7 +91,9 @@ describe('PromptView AI field generation', () => {
     vi.mocked(generatePromptField).mockResolvedValue('Generated description')
     render(<PromptView />)
 
-    fireEvent.click(screen.getByLabelText('Generate description from prompt content'))
+    // Second magic button is the description field
+    const magicButtons = screen.getAllByRole('button', { name: 'Generate with AI' })
+    fireEvent.click(magicButtons[1])
 
     await waitFor(() => expect(screen.getByDisplayValue('Generated description')).toBeTruthy())
     expect(generatePromptField).toHaveBeenCalledWith(expect.objectContaining({ fieldId: 'description', content: 'Original content' }))
@@ -101,7 +105,8 @@ describe('PromptView AI field generation', () => {
     render(<PromptView />)
 
     fireEvent.change(screen.getByLabelText('Content'), { target: { value: '' } })
-    fireEvent.click(screen.getByLabelText('Generate title from prompt content'))
+    const magicButtons = screen.getAllByRole('button', { name: 'Generate with AI' })
+    fireEvent.click(magicButtons[0])
 
     expect((await screen.findAllByText('Enter prompt content before generating this field.')).length).toBeGreaterThan(0)
     expect(promptRepository.update).not.toHaveBeenCalled()
@@ -111,7 +116,8 @@ describe('PromptView AI field generation', () => {
     vi.mocked(generatePromptField).mockRejectedValue(new Error('Select an AI Assistant model in Settings before generating prompt fields.'))
     render(<PromptView />)
 
-    fireEvent.click(screen.getByLabelText('Generate title from prompt content'))
+    const magicButtons = screen.getAllByRole('button', { name: 'Generate with AI' })
+    fireEvent.click(magicButtons[0])
 
     expect((await screen.findAllByText('Select an AI Assistant model in Settings before generating prompt fields.')).length).toBeGreaterThan(0)
     expect(promptRepository.update).not.toHaveBeenCalled()
@@ -121,7 +127,8 @@ describe('PromptView AI field generation', () => {
     vi.mocked(generatePromptField).mockRejectedValue(new Error('Provider failed with sk-or-secret-value'))
     render(<PromptView />)
 
-    fireEvent.click(screen.getByLabelText('Generate title from prompt content'))
+    const magicButtons = screen.getAllByRole('button', { name: 'Generate with AI' })
+    fireEvent.click(magicButtons[0])
 
     expect((await screen.findAllByText('Provider failed with [redacted-api-key]')).length).toBeGreaterThan(0)
     expect(screen.queryByText(/sk-or-secret-value/)).toBeNull()
@@ -131,7 +138,8 @@ describe('PromptView AI field generation', () => {
     vi.mocked(generatePromptField).mockRejectedValue(new Error('Enter prompt content before generating this field.'))
     render(<PromptView />)
 
-    fireEvent.click(screen.getByLabelText('Generate title from prompt content'))
+    const magicButtons = screen.getAllByRole('button', { name: 'Generate with AI' })
+    fireEvent.click(magicButtons[0])
 
     expect((await screen.findAllByText('Enter prompt content before generating this field.')).length).toBeGreaterThan(0)
     expect(screen.getByDisplayValue('Original title')).toBeTruthy()

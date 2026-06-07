@@ -214,9 +214,9 @@ describe('promptRepository.deleteAll', () => {
 })
 
 describe('DB_VERSION and _meta store', () => {
-  it('DB_VERSION is 6', async () => {
+  it('DB_VERSION is 8', async () => {
     const { DB_VERSION } = await import('./db')
-    expect(DB_VERSION).toBe(6)
+    expect(DB_VERSION).toBe(8)
   })
 
   it('_meta store exists after initDb()', async () => {
