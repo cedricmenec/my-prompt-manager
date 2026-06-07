@@ -65,6 +65,115 @@ describe('ApiModelsSettingsView', () => {
     await waitFor(() => expect((screen.getByLabelText('Enable Claude Beta') as HTMLInputElement).checked).toBe(true))
     expect((screen.getByLabelText('Enable GPT Alpha') as HTMLInputElement).checked).toBe(true)
   })
+
+  it('filters to show only enabled models when toggle is checked', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () =>
+        new Response(
+          JSON.stringify({
+            data: [
+              { id: 'openai/gpt-alpha', name: 'GPT Alpha', architecture: { input_modalities: ['text'] } },
+              { id: 'anthropic/claude-beta', name: 'Claude Beta', architecture: { input_modalities: ['text'] } },
+            ],
+          }),
+          { status: 200, headers: { 'Content-Type': 'application/json' } },
+        ),
+      ),
+    )
+
+    render(<ApiModelsSettingsView />)
+    fireEvent.change(screen.getByLabelText('API key'), { target: { value: 'sk-or-session' } })
+    fireEvent.click(screen.getByText('Load models'))
+
+    await waitFor(() => expect(screen.getByText('GPT Alpha')).toBeTruthy())
+
+    // Enable only Claude Beta
+    fireEvent.click(screen.getByLabelText('Enable Claude Beta'))
+
+    // Toggle "Only enabled"
+    fireEvent.click(screen.getByLabelText('Only enabled'))
+
+    // Only Claude Beta should be visible
+    expect(screen.getByText('Claude Beta')).toBeTruthy()
+    expect(screen.queryByText('GPT Alpha')).toBeNull()
+  })
+
+  it('combines enabled-only toggle with text search', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () =>
+        new Response(
+          JSON.stringify({
+            data: [
+              { id: 'openai/gpt-alpha', name: 'GPT Alpha', architecture: { input_modalities: ['text'] } },
+              { id: 'anthropic/claude-beta', name: 'Claude Beta', architecture: { input_modalities: ['text'] } },
+              { id: 'openai/gpt-beta', name: 'GPT Beta', architecture: { input_modalities: ['text'] } },
+            ],
+          }),
+          { status: 200, headers: { 'Content-Type': 'application/json' } },
+        ),
+      ),
+    )
+
+    render(<ApiModelsSettingsView />)
+    fireEvent.change(screen.getByLabelText('API key'), { target: { value: 'sk-or-session' } })
+    fireEvent.click(screen.getByText('Load models'))
+
+    await waitFor(() => expect(screen.getByText('GPT Alpha')).toBeTruthy())
+
+    // Enable Claude Beta and GPT Beta
+    fireEvent.click(screen.getByLabelText('Enable Claude Beta'))
+    fireEvent.click(screen.getByLabelText('Enable GPT Beta'))
+
+    // Toggle "Only enabled" and search for "gpt"
+    fireEvent.click(screen.getByLabelText('Only enabled'))
+    fireEvent.change(screen.getByLabelText('Search models'), { target: { value: 'gpt' } })
+
+    // Only GPT Beta should be visible (GPT Alpha is not enabled, Claude doesn't match "gpt")
+    expect(screen.getByText('GPT Beta')).toBeTruthy()
+    expect(screen.queryByText('GPT Alpha')).toBeNull()
+    expect(screen.queryByText('Claude Beta')).toBeNull()
+  })
+
+  it('resets only-enabled toggle when component re-mounts', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () =>
+        new Response(
+          JSON.stringify({
+            data: [
+              { id: 'openai/gpt-alpha', name: 'GPT Alpha', architecture: { input_modalities: ['text'] } },
+              { id: 'anthropic/claude-beta', name: 'Claude Beta', architecture: { input_modalities: ['text'] } },
+            ],
+          }),
+          { status: 200, headers: { 'Content-Type': 'application/json' } },
+        ),
+      ),
+    )
+
+    const { unmount } = render(<ApiModelsSettingsView />)
+    fireEvent.change(screen.getByLabelText('API key'), { target: { value: 'sk-or-session' } })
+    fireEvent.click(screen.getByText('Load models'))
+
+    await waitFor(() => expect(screen.getByText('GPT Alpha')).toBeTruthy())
+
+    // Enable Claude Beta and toggle "Only enabled"
+    fireEvent.click(screen.getByLabelText('Enable Claude Beta'))
+    fireEvent.click(screen.getByLabelText('Only enabled'))
+
+    // Verify filter is active
+    expect(screen.queryByText('GPT Alpha')).toBeNull()
+
+    // Unmount and remount
+    unmount()
+    render(<ApiModelsSettingsView />)
+
+    // Toggle should be unchecked — all models shown again
+    await waitFor(() => expect(screen.getByText('GPT Alpha')).toBeTruthy())
+    expect(screen.getByText('Claude Beta')).toBeTruthy()
+    expect((screen.getByLabelText('Only enabled') as HTMLInputElement).checked).toBe(false)
+  })
 })
 
 

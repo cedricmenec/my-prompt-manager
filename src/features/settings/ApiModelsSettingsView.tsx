@@ -13,6 +13,7 @@ export function ApiModelsSettingsView() {
   const [models, setModels] = useState<AiProviderModel[]>([])
   const [enabledModelIds, setEnabledModelIds] = useState<Set<string>>(() => new Set())
   const [query, setQuery] = useState('')
+  const [onlyEnabled, setOnlyEnabled] = useState(false)
   const [loadState, setLoadState] = useState<LoadState>('idle')
   const [message, setMessage] = useState('Load models with your session-only OpenRouter key.')
 
@@ -49,10 +50,16 @@ export function ApiModelsSettingsView() {
   }, [selectedProviderId])
 
   const filteredModels = useMemo(() => {
+    let result = models
+    if (onlyEnabled) {
+      result = result.filter((model) => enabledModelIds.has(model.id))
+    }
     const normalizedQuery = query.trim().toLowerCase()
-    if (!normalizedQuery) return models
-    return models.filter((model) => model.name.toLowerCase().includes(normalizedQuery))
-  }, [models, query])
+    if (normalizedQuery) {
+      result = result.filter((model) => model.name.toLowerCase().includes(normalizedQuery))
+    }
+    return result
+  }, [models, query, onlyEnabled, enabledModelIds])
 
   async function handleLoadModels() {
     if (!apiKey.trim()) {
@@ -167,16 +174,27 @@ export function ApiModelsSettingsView() {
             <h3 className="text-sm font-medium text-text-heading">Models</h3>
             <p className="mt-1 text-xs text-text">{enabledModelIds.size} enabled model{enabledModelIds.size !== 1 ? 's' : ''}</p>
           </div>
-          <label className="grid min-w-56 gap-1 text-sm text-text-heading">
-            Search models
-            <input
-              type="search"
-              value={query}
-              onChange={(event) => setQuery(event.target.value)}
-              className="rounded-md border border-border bg-surface px-3 py-2 text-sm text-text"
-              placeholder="Filter by name"
-            />
-          </label>
+          <div className="flex items-end gap-3">
+            <label className="flex items-center gap-2 self-end text-sm text-text-heading">
+              <input
+                type="checkbox"
+                checked={onlyEnabled}
+                onChange={(event) => setOnlyEnabled(event.target.checked)}
+                className="rounded border-border"
+              />
+              Only enabled
+            </label>
+            <label className="grid min-w-56 gap-1 text-sm text-text-heading">
+              Search models
+              <input
+                type="search"
+                value={query}
+                onChange={(event) => setQuery(event.target.value)}
+                className="rounded-md border border-border bg-surface px-3 py-2 text-sm text-text"
+                placeholder="Filter by name"
+              />
+            </label>
+          </div>
         </div>
 
         <div className="max-h-72 overflow-auto rounded-lg border border-border">

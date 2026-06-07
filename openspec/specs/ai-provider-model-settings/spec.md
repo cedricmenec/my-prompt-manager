@@ -65,7 +65,7 @@ The system SHALL load the OpenRouter model catalog from the browser using the us
 ---
 
 ### Requirement: Model search and selection
-The system SHALL show a searchable model list for the selected provider and SHALL allow selecting multiple models as enabled models.
+The system SHALL show a searchable model list for the selected provider and SHALL allow selecting multiple models as enabled models. The system SHALL provide a toggle to filter the displayed list to show only enabled models. The toggle SHALL be cumulative with the text search filter. The toggle SHALL be ephemeral (not persisted across sessions).
 
 #### Scenario: User searches models
 - **WHEN** the user types in the model search field
@@ -82,6 +82,22 @@ The system SHALL show a searchable model list for the selected provider and SHAL
 #### Scenario: Cost column is reserved
 - **WHEN** the model list is displayed
 - **THEN** the table includes columns for model name, origin provider, and future token cost information
+
+#### Scenario: User toggles enabled-only filter on
+- **WHEN** the user checks the "Only enabled" toggle
+- **THEN** the model table displays only models whose checkbox is checked (enabled)
+
+#### Scenario: User toggles enabled-only filter off
+- **WHEN** the user unchecks the "Only enabled" toggle
+- **THEN** the model table displays all models again (subject to text search if active)
+
+#### Scenario: Enabled-only filter combines with text search
+- **WHEN** the "Only enabled" toggle is on AND the user types in the search field
+- **THEN** the model table displays only enabled models whose name matches the search query
+
+#### Scenario: Enabled-only toggle is ephemeral
+- **WHEN** the settings panel is closed and reopened
+- **THEN** the "Only enabled" toggle resets to unchecked (all models shown)
 
 ---
 
