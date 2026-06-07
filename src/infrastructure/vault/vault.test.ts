@@ -14,7 +14,6 @@ import {
   importVault,
   changePassphrase,
   deleteVault,
-  type VaultPayload,
 } from './vault'
 
 function cloneForTest<T>(value: T): T {

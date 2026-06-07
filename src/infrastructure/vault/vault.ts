@@ -17,7 +17,6 @@ import {
   deriveVerifyHash,
   encrypt,
   decrypt,
-  isWebCryptoAvailable,
 } from './vaultCrypto'
 import * as repo from './vaultRepository'
 import type { EncryptedVaultRecord } from '../db'

@@ -10,7 +10,6 @@ import {
   deleteVault,
   createVault,
   lockVault,
-  type VaultPayload,
 } from '@/infrastructure/vault'
 import { isWebCryptoAvailable } from '@/infrastructure/vault/vaultCrypto'
 
@@ -28,7 +27,7 @@ export function VaultSettingsSection() {
   const [currentPassphrase, setCurrentPassphrase] = useState('')
   const [newPassphrase, setNewPassphrase] = useState('')
   const [confirmNewPassphrase, setConfirmNewPassphrase] = useState('')
-  const [deletePassphrase, setDeletePassphrase] = useState('')
+  const [_deletePassphrase, setDeletePassphrase] = useState('')
   const importInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {

@@ -4,7 +4,6 @@ import {
   isUnlocked,
   createVault,
   unlockVault,
-  lockVault,
 } from '@/infrastructure/vault'
 import { isWebCryptoAvailable } from '@/infrastructure/vault/vaultCrypto'
 import { VaultCreateModal } from './VaultCreateModal'

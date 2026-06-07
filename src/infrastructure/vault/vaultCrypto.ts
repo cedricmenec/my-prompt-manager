@@ -55,7 +55,7 @@ async function deriveRawKey(
   return window.crypto.subtle.deriveKey(
     {
       name: 'PBKDF2',
-      salt,
+      salt: salt as BufferSource,
       iterations,
       hash: 'SHA-256',
     },
@@ -96,7 +96,7 @@ export async function deriveVerifyHash(
   const bits = await window.crypto.subtle.deriveBits(
     {
       name: 'PBKDF2',
-      salt,
+      salt: salt as BufferSource,
       iterations: VERIFY_ITERATIONS,
       hash: 'SHA-256',
     },
@@ -118,7 +118,7 @@ export async function encrypt(
 ): Promise<Uint8Array> {
   const encoder = new TextEncoder()
   const encrypted = await window.crypto.subtle.encrypt(
-    { name: 'AES-GCM', iv },
+    { name: 'AES-GCM', iv: iv as BufferSource },
     key,
     encoder.encode(plaintext),
   )
@@ -131,9 +131,9 @@ export async function decrypt(
   ciphertext: Uint8Array,
 ): Promise<string> {
   const decrypted = await window.crypto.subtle.decrypt(
-    { name: 'AES-GCM', iv },
+    { name: 'AES-GCM', iv: iv as BufferSource },
     key,
-    ciphertext,
+    ciphertext as BufferSource,
   )
   return new TextDecoder().decode(decrypted)
 }

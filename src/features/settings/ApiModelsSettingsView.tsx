@@ -3,7 +3,7 @@ import { AI_PROVIDER_DEFINITIONS, SUPPORTED_AI_PROVIDER_ID } from '@/infrastruct
 import { aiProviderSettingsRepository } from '@/infrastructure/aiProviderSettingsRepository'
 import type { AiProviderModel } from '@/infrastructure/db'
 import { fetchOpenRouterModels, OpenRouterModelsError } from '@/infrastructure/openRouterModelsClient'
-import { sessionCredentials } from '@/infrastructure/sessionCredentials'
+import { sessionCredentials, type SessionCredentialProviderId } from '@/infrastructure/sessionCredentials'
 
 type LoadState = 'idle' | 'loading' | 'success' | 'validation-error' | 'provider-error'
 
@@ -33,7 +33,7 @@ export function ApiModelsSettingsView() {
       }
 
       // Restore API key from session credentials (vault or in-memory cache)
-      const restoredKey = sessionCredentials.getApiKey(selectedProviderId)
+      const restoredKey = sessionCredentials.getApiKey(selectedProviderId as SessionCredentialProviderId)
       if (restoredKey && !cancelled) {
         setApiKey(restoredKey)
         // Update message to indicate key was restored from vault

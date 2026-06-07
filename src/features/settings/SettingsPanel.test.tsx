@@ -41,6 +41,23 @@ vi.mock('@/infrastructure/driveImportExport', () => ({
   listDriveSnapshots: vi.fn(async () => []),
 }))
 
+vi.mock('@/infrastructure/vault', () => ({
+  isVaultAvailable: vi.fn(async () => false),
+  isUnlocked: vi.fn(() => false),
+  exportVault: vi.fn(async () => null),
+  importVault: vi.fn(async () => {}),
+  changePassphrase: vi.fn(async () => {}),
+  deleteVault: vi.fn(async () => {}),
+  createVault: vi.fn(async () => {}),
+  lockVault: vi.fn(),
+  getDecryptedPayload: vi.fn(() => null),
+  persistPayload: vi.fn(async () => {}),
+}))
+
+vi.mock('@/infrastructure/vault/vaultCrypto', () => ({
+  isWebCryptoAvailable: vi.fn(() => true),
+}))
+
 describe('SettingsPanel Google Drive settings', () => {
   beforeEach(() => {
     localStorage.clear()
@@ -103,6 +120,8 @@ describe('SettingsPanel Google Drive settings', () => {
     expect(screen.getByText('Prompt input assistant')).toBeTruthy()
     fireEvent.click(screen.getByText('API & Models'))
     expect(screen.getByText('Provider')).toBeTruthy()
+    fireEvent.click(screen.getByText('Vault'))
+    expect(screen.getByText('Encrypted Vault')).toBeTruthy()
     expect(screen.getByLabelText('Settings categories')).toBeTruthy()
     expect(screen.getByRole('dialog').className).toContain('h-[min(42rem,92vh)]')
     expect(document.querySelector('div[class*="overflow-y-auto"][class*="pr-1"]')).toBeTruthy()
