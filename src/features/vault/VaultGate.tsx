@@ -4,6 +4,7 @@ import {
   isUnlocked,
   createVault,
   unlockVault,
+  tryAutoUnlock,
 } from '@/infrastructure/vault'
 import { isWebCryptoAvailable } from '@/infrastructure/vault/vaultCrypto'
 import { VaultCreateModal } from './VaultCreateModal'
@@ -28,12 +29,18 @@ export function VaultGate({ children }: VaultGateProps) {
 
     // Check vault state
     isVaultAvailable()
-      .then((available) => {
+      .then(async (available) => {
         if (available) {
           if (isUnlocked()) {
             setVaultState('unlocked')
           } else {
-            setVaultState('locked')
+            // Try auto-unlock with cached passphrase before showing modal
+            const autoUnlocked = await tryAutoUnlock()
+            if (autoUnlocked) {
+              setVaultState('unlocked')
+            } else {
+              setVaultState('locked')
+            }
           }
         } else {
           setVaultState('no-vault')

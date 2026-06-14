@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import 'fake-indexeddb/auto'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { IDBFactory } from 'fake-indexeddb'
@@ -10,6 +10,25 @@ function cloneForTest<T>(value: T): T {
 }
 
 const authState = vi.hoisted(() => ({ connected: false }))
+
+const vaultModule = vi.hoisted(() => ({
+  isVaultAvailable: vi.fn(async () => false),
+  isUnlocked: vi.fn(() => false),
+  exportVault: vi.fn(async () => null),
+  importVault: vi.fn(async () => {}),
+  changePassphrase: vi.fn(async () => {}),
+  deleteVault: vi.fn(async () => {}),
+  createVault: vi.fn(async () => {}),
+  lockVault: vi.fn(),
+  getDecryptedPayload: vi.fn(() => null),
+  persistPayload: vi.fn(async () => {}),
+  tryAutoUnlock: vi.fn(async () => false),
+}))
+
+const vaultSessionModule = vi.hoisted(() => ({
+  getTTLConfig: vi.fn(() => 60),
+  setTTLConfig: vi.fn(),
+}))
 
 vi.mock('@/features/prompts/PromptsContext', () => ({
   usePrompts: () => ({
@@ -41,18 +60,9 @@ vi.mock('@/infrastructure/driveImportExport', () => ({
   listDriveSnapshots: vi.fn(async () => []),
 }))
 
-vi.mock('@/infrastructure/vault', () => ({
-  isVaultAvailable: vi.fn(async () => false),
-  isUnlocked: vi.fn(() => false),
-  exportVault: vi.fn(async () => null),
-  importVault: vi.fn(async () => {}),
-  changePassphrase: vi.fn(async () => {}),
-  deleteVault: vi.fn(async () => {}),
-  createVault: vi.fn(async () => {}),
-  lockVault: vi.fn(),
-  getDecryptedPayload: vi.fn(() => null),
-  persistPayload: vi.fn(async () => {}),
-}))
+vi.mock('@/infrastructure/vault', () => vaultModule)
+
+vi.mock('@/infrastructure/vault/vaultSession', () => vaultSessionModule)
 
 vi.mock('@/infrastructure/vault/vaultCrypto', () => ({
   isWebCryptoAvailable: vi.fn(() => true),
@@ -61,10 +71,25 @@ vi.mock('@/infrastructure/vault/vaultCrypto', () => ({
 describe('SettingsPanel Google Drive settings', () => {
   beforeEach(() => {
     localStorage.clear()
+    sessionStorage.clear()
     authState.connected = false
     globalThis.structuredClone = cloneForTest
     globalThis.indexedDB = new IDBFactory()
     resetDb()
+    // Reset vault mocks to defaults
+    vaultModule.isVaultAvailable.mockResolvedValue(false)
+    vaultModule.isUnlocked.mockReturnValue(false)
+    vaultModule.tryAutoUnlock.mockResolvedValue(false)
+    vaultModule.lockVault.mockClear()
+    vaultModule.createVault.mockResolvedValue(undefined)
+    vaultModule.deleteVault.mockResolvedValue(undefined)
+    vaultModule.importVault.mockResolvedValue(undefined)
+    vaultModule.exportVault.mockResolvedValue(null)
+    vaultModule.changePassphrase.mockResolvedValue(undefined)
+    vaultModule.persistPayload.mockResolvedValue(undefined)
+    vaultModule.getDecryptedPayload.mockReturnValue(null)
+    vaultSessionModule.getTTLConfig.mockReturnValue(60)
+    vaultSessionModule.setTTLConfig.mockClear()
   })
 
   it('renders Drive controls and not configured status', () => {
@@ -128,6 +153,83 @@ describe('SettingsPanel Google Drive settings', () => {
 
     fireEvent.keyDown(window, { key: 'Escape' })
     expect(onClose).toHaveBeenCalledTimes(1)
+  })
+
+  describe('Vault session timeout', () => {
+    it('hides session timeout section when no vault exists', () => {
+      render(<SettingsPanel onClose={vi.fn()} />)
+
+      fireEvent.click(screen.getByText('Vault'))
+      expect(screen.getByText('Encrypted Vault')).toBeTruthy()
+      expect(screen.queryByText('Session timeout')).toBeNull()
+    })
+
+    it('shows session timeout section when vault exists', async () => {
+      vi.mocked(vaultModule.isVaultAvailable).mockResolvedValue(true)
+      vi.mocked(vaultModule.isUnlocked).mockReturnValue(true)
+
+      render(<SettingsPanel onClose={vi.fn()} />)
+
+      fireEvent.click(screen.getByText('Vault'))
+
+      await waitFor(() => {
+        expect(screen.getByText('Session timeout')).toBeTruthy()
+      })
+      expect(screen.getByText('Disabled')).toBeTruthy()
+      expect(screen.getByText('1 hour')).toBeTruthy()
+      expect(screen.getByText('Session')).toBeTruthy()
+    })
+
+    it('persists TTL selection to localStorage', async () => {
+      vi.mocked(vaultModule.isVaultAvailable).mockResolvedValue(true)
+      vi.mocked(vaultModule.isUnlocked).mockReturnValue(true)
+      vi.mocked(vaultSessionModule.setTTLConfig).mockImplementation(() => {
+        localStorage.setItem('vault-session-ttl', '15')
+      })
+
+      render(<SettingsPanel onClose={vi.fn()} />)
+      fireEvent.click(screen.getByText('Vault'))
+
+      await waitFor(() => {
+        expect(screen.getByText('Session timeout')).toBeTruthy()
+      })
+
+      // Select 15 minutes option (by radio value attribute)
+      const radio15 = screen.getByDisplayValue('15')
+      fireEvent.click(radio15)
+
+      expect(localStorage.getItem('vault-session-ttl')).toBe('15')
+      expect(vaultSessionModule.setTTLConfig).toHaveBeenCalledWith(15)
+    })
+
+    it('Disabled option clears session cache', async () => {
+      vi.mocked(vaultModule.isVaultAvailable).mockResolvedValue(true)
+      vi.mocked(vaultModule.isUnlocked).mockReturnValue(true)
+      vi.mocked(vaultSessionModule.setTTLConfig).mockImplementation(() => {
+        localStorage.setItem('vault-session-ttl', '0')
+        sessionStorage.removeItem('vault-session-cache')
+      })
+
+      // Pre-populate cache
+      sessionStorage.setItem(
+        'vault-session-cache',
+        JSON.stringify({ passphrase: 'test', unlockedAt: Date.now() }),
+      )
+
+      render(<SettingsPanel onClose={vi.fn()} />)
+      fireEvent.click(screen.getByText('Vault'))
+
+      await waitFor(() => {
+        expect(screen.getByText('Session timeout')).toBeTruthy()
+      })
+
+      // Select Disabled
+      const radioDisabled = screen.getByDisplayValue('0')
+      fireEvent.click(radioDisabled)
+
+      expect(vaultSessionModule.setTTLConfig).toHaveBeenCalledWith(0)
+      expect(sessionStorage.getItem('vault-session-cache')).toBeNull()
+    })
   })
 })
 

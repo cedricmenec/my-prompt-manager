@@ -19,6 +19,11 @@ import {
   decrypt,
 } from './vaultCrypto'
 import * as repo from './vaultRepository'
+import {
+  storeSessionPassphrase,
+  tryGetSessionPassphrase,
+  clearSessionCache,
+} from './vaultSession'
 import type { EncryptedVaultRecord } from '../db'
 
 // ---------------------------------------------------------------------------
@@ -116,6 +121,8 @@ export async function createVault(passphrase: string): Promise<void> {
     cryptoKey = key
     payload = emptyPayload
     vaultExistsInDb = true
+
+    storeSessionPassphrase(passphrase)
   })
 }
 
@@ -151,6 +158,8 @@ export async function unlockVault(passphrase: string): Promise<void> {
     cryptoKey = key
     payload = decryptedPayload
     vaultExistsInDb = true
+
+    storeSessionPassphrase(passphrase)
   })
 }
 
@@ -159,6 +168,7 @@ export async function unlockVault(passphrase: string): Promise<void> {
  * The encrypted record remains in IndexedDB.
  */
 export function lockVault(): void {
+  clearSessionCache()
   cryptoKey = null
   payload = null
 }
@@ -266,6 +276,8 @@ export async function importVault(
     cryptoKey = key
     payload = decryptedPayload
     vaultExistsInDb = true
+
+    storeSessionPassphrase(passphrase)
   })
 }
 
@@ -341,7 +353,34 @@ export async function deleteVault(): Promise<void> {
     cryptoKey = null
     payload = null
     vaultExistsInDb = false
+    clearSessionCache()
   })
+}
+
+// ---------------------------------------------------------------------------
+// Auto-unlock (session cache)
+// ---------------------------------------------------------------------------
+
+/**
+ * Attempt to auto-unlock the vault using the cached passphrase in
+ * `sessionStorage`. Returns `true` on success, `false` on failure.
+ * On failure, clears the cache silently — the caller should show the
+ * unlock modal as a fallback.
+ *
+ * This is used by `VaultGate` at page load to avoid showing the unlock
+ * prompt when the vault can be unlocked silently.
+ */
+export async function tryAutoUnlock(): Promise<boolean> {
+  const cachedPassphrase = tryGetSessionPassphrase()
+  if (!cachedPassphrase) return false
+
+  try {
+    await unlockVault(cachedPassphrase)
+    return true
+  } catch {
+    clearSessionCache()
+    return false
+  }
 }
 
 // ---------------------------------------------------------------------------

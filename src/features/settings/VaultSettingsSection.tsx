@@ -12,11 +12,20 @@ import {
   lockVault,
 } from '@/infrastructure/vault'
 import { isWebCryptoAvailable } from '@/infrastructure/vault/vaultCrypto'
+import { getTTLConfig, setTTLConfig, type TTLMinutes } from '@/infrastructure/vault/vaultSession'
 
 interface VaultStatus {
   available: boolean
   unlocked: boolean
 }
+
+const TTL_OPTIONS: { value: TTLMinutes; label: string; description: string }[] = [
+  { value: 0, label: 'Disabled', description: 'Prompt every time (most secure)' },
+  { value: 15, label: '15 minutes', description: 'Higher security' },
+  { value: 60, label: '1 hour', description: 'Balanced (recommended)' },
+  { value: 240, label: '4 hours', description: 'Extended convenience' },
+  { value: -1, label: 'Session', description: 'No auto-lock (until tab closed)' },
+]
 
 export function VaultSettingsSection() {
   const { show: showToast } = useToast()
@@ -28,6 +37,7 @@ export function VaultSettingsSection() {
   const [newPassphrase, setNewPassphrase] = useState('')
   const [confirmNewPassphrase, setConfirmNewPassphrase] = useState('')
   const [_deletePassphrase, setDeletePassphrase] = useState('')
+  const [ttlConfig, setTtlConfig] = useState<TTLMinutes>(getTTLConfig)
   const importInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
@@ -333,6 +343,39 @@ export function VaultSettingsSection() {
             <Button variant="danger" onClick={handleDeleteVault} disabled={isBusy}>
               Delete vault
             </Button>
+          </div>
+        </div>
+      )}
+
+      {/* Session timeout — only visible when a vault exists */}
+      {status.available && (
+        <div className="rounded-lg border border-border p-4 space-y-3">
+          <h4 className="text-sm font-medium text-text-heading">Session timeout</h4>
+          <p className="text-xs text-text-muted">
+            Controls how long the vault stays unlocked after a page reload.
+            Longer intervals are more convenient but less secure.
+          </p>
+          <div className="space-y-2" role="radiogroup" aria-label="Session timeout">
+            {TTL_OPTIONS.map((opt) => (
+              <label
+                key={opt.value}
+                className="flex cursor-pointer items-center gap-2 text-sm text-text"
+              >
+                <input
+                  type="radio"
+                  name="vault-ttl"
+                  value={opt.value}
+                  checked={ttlConfig === opt.value}
+                  onChange={() => {
+                    setTtlConfig(opt.value)
+                    setTTLConfig(opt.value)
+                  }}
+                  className="accent-primary"
+                />
+                <span className="font-medium">{opt.label}</span>
+                <span className="text-xs text-text-muted">— {opt.description}</span>
+              </label>
+            ))}
           </div>
         </div>
       )}

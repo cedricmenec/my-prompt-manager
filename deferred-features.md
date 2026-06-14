@@ -31,16 +31,6 @@ Features deliberately scoped out of the `manual-import-export` change.
 **Description**: Let the user select a subset of prompts (e.g., by collection/tag) and export only those.
 
 **Why deferred**: Low demand for V1; the full export is a useful baseline. A multi-select UI across the list view is a bigger UX change.
----
-
-## AI provider/model settings foundation
-
-**Description**: The Settings panel now includes an `API & Models` section for session-only OpenRouter key entry, model catalog loading, cached model metadata, and enabled model selection stored in IndexedDB.
-
-**Status**: ✅ Implemented — Encrypted vault persistence for API keys has been implemented in the `encrypted-vault` change.
-
-**Why deferred**: This change establishes provider/model selection without persisting raw API keys. Storing API keys in clear text in localStorage or IndexedDB would violate the local-first BYOK security model.
-
 
 ---
 

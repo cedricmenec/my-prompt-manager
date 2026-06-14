@@ -6,7 +6,12 @@ import { resetDb } from '@/infrastructure/db'
 import { VaultCreateModal } from './VaultCreateModal'
 import { VaultUnlockModal } from './VaultUnlockModal'
 import { VaultGate } from './VaultGate'
-import { lockVault, deleteVault } from '@/infrastructure/vault'
+import {
+  lockVault,
+  deleteVault,
+  createVault,
+  tryAutoUnlock,
+} from '@/infrastructure/vault'
 
 function cloneForTest<T>(value: T): T {
   return value
@@ -16,6 +21,8 @@ beforeEach(async () => {
   globalThis.indexedDB = new IDBFactory()
   globalThis.structuredClone = cloneForTest
   resetDb()
+  sessionStorage.clear()
+  localStorage.clear()
   await deleteVault()
   lockVault()
 })
@@ -171,6 +178,65 @@ describe('VaultGate', () => {
 
     await waitFor(() => {
       expect(screen.getByText('App content')).toBeTruthy()
+    })
+  })
+
+  it('auto-unlocks vault when valid session cache exists', async () => {
+    // Create a vault first (uses real Web Crypto + fake IndexedDB)
+    await createVault('test-passphrase-here')
+    lockVault()
+
+    // Manually populate the session cache with the correct passphrase
+    sessionStorage.setItem(
+      'vault-session-cache',
+      JSON.stringify({ passphrase: 'test-passphrase-here', unlockedAt: Date.now() }),
+    )
+
+    render(<VaultGate>App content</VaultGate>)
+
+    // Should render children directly without showing unlock modal
+    await waitFor(() => {
+      expect(screen.getByText('App content')).toBeTruthy()
+      expect(screen.queryByText('Unlock Vault')).toBeNull()
+    })
+  })
+
+  it('shows unlock modal when session cache passphrase is wrong', async () => {
+    await createVault('test-passphrase-here')
+    lockVault()
+
+    // Cache a wrong passphrase
+    sessionStorage.setItem(
+      'vault-session-cache',
+      JSON.stringify({ passphrase: 'wrong-passphrase', unlockedAt: Date.now() }),
+    )
+
+    render(<VaultGate>App content</VaultGate>)
+
+    // Auto-unlock fails → should show the unlock modal
+    await waitFor(() => {
+      expect(screen.getByText('Unlock Vault')).toBeTruthy()
+    })
+  })
+
+  it('shows unlock modal when session cache TTL has expired', async () => {
+    localStorage.setItem('vault-session-ttl', '15') // 15 minute TTL
+    await createVault('test-passphrase-here')
+    lockVault()
+
+    // Cache passphrase but with an old timestamp (20 min ago)
+    sessionStorage.setItem(
+      'vault-session-cache',
+      JSON.stringify({
+        passphrase: 'test-passphrase-here',
+        unlockedAt: Date.now() - 20 * 60 * 1000,
+      }),
+    )
+
+    render(<VaultGate>App content</VaultGate>)
+
+    await waitFor(() => {
+      expect(screen.getByText('Unlock Vault')).toBeTruthy()
     })
   })
 })

@@ -14,7 +14,13 @@ import {
   importVault,
   changePassphrase,
   deleteVault,
+  tryAutoUnlock,
 } from './vault'
+import {
+  getTTLConfig,
+  setTTLConfig,
+  tryGetSessionPassphrase,
+} from './vaultSession'
 
 function cloneForTest<T>(value: T): T {
   return value
@@ -24,6 +30,8 @@ beforeEach(async () => {
   globalThis.indexedDB = new IDBFactory()
   globalThis.structuredClone = cloneForTest
   resetDb()
+  sessionStorage.clear()
+  localStorage.clear()
   await deleteVault()
   lockVault()
 })
@@ -246,6 +254,152 @@ describe('vault façade', () => {
 
     it('persistPayload throws when vault is not unlocked', async () => {
       await expect(persistPayload()).rejects.toThrow('Vault is not unlocked')
+    })
+  })
+
+  describe('session cache integration', () => {
+    it('creates a vault and caches passphrase in sessionStorage', async () => {
+      await createVault(PASSPHRASE)
+
+      const cached = tryGetSessionPassphrase()
+      expect(cached).toBe(PASSPHRASE)
+    })
+
+    it('unlocks a vault and caches passphrase in sessionStorage', async () => {
+      await createVault(PASSPHRASE)
+      lockVault()
+
+      expect(tryGetSessionPassphrase()).toBeNull()
+
+      await unlockVault(PASSPHRASE)
+
+      const cached = tryGetSessionPassphrase()
+      expect(cached).toBe(PASSPHRASE)
+    })
+
+    it('lockVault clears the session cache', async () => {
+      await createVault(PASSPHRASE)
+      expect(tryGetSessionPassphrase()).toBe(PASSPHRASE)
+
+      lockVault()
+      expect(tryGetSessionPassphrase()).toBeNull()
+    })
+
+    it('deleteVault clears the session cache', async () => {
+      await createVault(PASSPHRASE)
+      expect(tryGetSessionPassphrase()).toBe(PASSPHRASE)
+
+      await deleteVault()
+      expect(tryGetSessionPassphrase()).toBeNull()
+    })
+
+    it('importVault caches the new passphrase after import', async () => {
+      await createVault(PASSPHRASE)
+      const exported = (await exportVault()) as Record<string, unknown>
+
+      await deleteVault()
+      lockVault()
+
+      expect(tryGetSessionPassphrase()).toBeNull()
+
+      await importVault(exported, PASSPHRASE)
+
+      const cached = tryGetSessionPassphrase()
+      expect(cached).toBe(PASSPHRASE)
+    })
+
+    it('importVault clears old cache when importing different vault', async () => {
+      await createVault(PASSPHRASE)
+
+      const secondPass = 'second-passphrase'
+      const exported = (await exportVault()) as Record<string, unknown>
+
+      // Create vault with second passphrase, then lock
+      await createVault(secondPass)
+      lockVault()
+      // ImportVault should clear cache and re-cache with import passphrase
+      await importVault(exported, PASSPHRASE)
+
+      // After lock, cache should be cleared
+      lockVault()
+      expect(tryGetSessionPassphrase()).toBeNull()
+    })
+  })
+
+  describe('tryAutoUnlock', () => {
+    it('returns false when no session cache exists', async () => {
+      await createVault(PASSPHRASE)
+      lockVault()
+
+      const result = await tryAutoUnlock()
+      expect(result).toBe(false)
+      expect(isUnlocked()).toBe(false)
+    })
+
+    it('returns true and unlocks when valid cache exists', async () => {
+      setTTLConfig(60)
+      await createVault(PASSPHRASE)
+      lockVault()
+
+      // Manually populate the cache
+      sessionStorage.setItem(
+        'vault-session-cache',
+        JSON.stringify({ passphrase: PASSPHRASE, unlockedAt: Date.now() }),
+      )
+
+      const result = await tryAutoUnlock()
+      expect(result).toBe(true)
+      expect(isUnlocked()).toBe(true)
+    })
+
+    it('returns false and clears cache when cached passphrase is wrong', async () => {
+      setTTLConfig(60)
+      await createVault(PASSPHRASE)
+      lockVault()
+
+      // Cache a wrong passphrase
+      sessionStorage.setItem(
+        'vault-session-cache',
+        JSON.stringify({ passphrase: 'wrong-passphrase', unlockedAt: Date.now() }),
+      )
+
+      const result = await tryAutoUnlock()
+      expect(result).toBe(false)
+      expect(isUnlocked()).toBe(false)
+      // Cache should be cleared after failed auto-unlock
+      expect(tryGetSessionPassphrase()).toBeNull()
+    })
+
+    it('returns false when TTL is Disabled', async () => {
+      setTTLConfig(0)
+      await createVault(PASSPHRASE)
+      lockVault()
+
+      // Cache passphrase (but TTL is Disabled)
+      sessionStorage.setItem(
+        'vault-session-cache',
+        JSON.stringify({ passphrase: PASSPHRASE, unlockedAt: Date.now() }),
+      )
+
+      const result = await tryAutoUnlock()
+      expect(result).toBe(false)
+      expect(isUnlocked()).toBe(false)
+    })
+
+    it('returns false when TTL has expired', async () => {
+      setTTLConfig(15)
+      await createVault(PASSPHRASE)
+      lockVault()
+
+      // Cache passphrase but with an old timestamp
+      sessionStorage.setItem(
+        'vault-session-cache',
+        JSON.stringify({ passphrase: PASSPHRASE, unlockedAt: Date.now() - 20 * 60 * 1000 }),
+      )
+
+      const result = await tryAutoUnlock()
+      expect(result).toBe(false)
+      expect(isUnlocked()).toBe(false)
     })
   })
 })

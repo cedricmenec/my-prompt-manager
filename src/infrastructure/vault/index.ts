@@ -10,5 +10,6 @@ export {
   importVault,
   changePassphrase,
   deleteVault,
+  tryAutoUnlock,
   type VaultPayload,
 } from './vault'
