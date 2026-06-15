@@ -1,11 +1,10 @@
-import { beforeEach, describe, expect, it, vi, afterEach } from 'vitest'
+import { beforeEach, describe, expect, it, afterEach } from 'vitest'
 import {
   storeSessionPassphrase,
   tryGetSessionPassphrase,
   clearSessionCache,
   getTTLConfig,
   setTTLConfig,
-  type TTLMinutes,
 } from './vaultSession'
 
 const STORAGE_KEY = 'vault-session-cache'

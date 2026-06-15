@@ -17,7 +17,6 @@ import {
   tryAutoUnlock,
 } from './vault'
 import {
-  getTTLConfig,
   setTTLConfig,
   tryGetSessionPassphrase,
 } from './vaultSession'

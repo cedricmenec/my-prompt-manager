@@ -10,7 +10,6 @@ import {
   lockVault,
   deleteVault,
   createVault,
-  tryAutoUnlock,
 } from '@/infrastructure/vault'
 
 function cloneForTest<T>(value: T): T {
