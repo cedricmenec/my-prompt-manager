@@ -23,11 +23,9 @@ const vaultModule = vi.hoisted(() => ({
   getDecryptedPayload: vi.fn(() => null),
   persistPayload: vi.fn(async () => {}),
   tryAutoUnlock: vi.fn(async () => false),
-}))
-
-const vaultSessionModule = vi.hoisted(() => ({
   getTTLConfig: vi.fn(() => 60),
   setTTLConfig: vi.fn(),
+  isWebCryptoAvailable: vi.fn(() => true),
 }))
 
 vi.mock('@/features/prompts/PromptsContext', () => ({
@@ -62,12 +60,6 @@ vi.mock('@/infrastructure/driveImportExport', () => ({
 
 vi.mock('@/infrastructure/vault', () => vaultModule)
 
-vi.mock('@/infrastructure/vault/vaultSession', () => vaultSessionModule)
-
-vi.mock('@/infrastructure/vault/vaultCrypto', () => ({
-  isWebCryptoAvailable: vi.fn(() => true),
-}))
-
 describe('SettingsPanel Google Drive settings', () => {
   beforeEach(() => {
     localStorage.clear()
@@ -88,8 +80,8 @@ describe('SettingsPanel Google Drive settings', () => {
     vaultModule.changePassphrase.mockResolvedValue(undefined)
     vaultModule.persistPayload.mockResolvedValue(undefined)
     vaultModule.getDecryptedPayload.mockReturnValue(null)
-    vaultSessionModule.getTTLConfig.mockReturnValue(60)
-    vaultSessionModule.setTTLConfig.mockClear()
+    vaultModule.getTTLConfig.mockReturnValue(60)
+    vaultModule.setTTLConfig.mockClear()
   })
 
   it('renders Drive controls and not configured status', () => {
@@ -183,7 +175,7 @@ describe('SettingsPanel Google Drive settings', () => {
     it('persists TTL selection to localStorage', async () => {
       vi.mocked(vaultModule.isVaultAvailable).mockResolvedValue(true)
       vi.mocked(vaultModule.isUnlocked).mockReturnValue(true)
-      vi.mocked(vaultSessionModule.setTTLConfig).mockImplementation(() => {
+      vi.mocked(vaultModule.setTTLConfig).mockImplementation(() => {
         localStorage.setItem('vault-session-ttl', '15')
       })
 
@@ -199,13 +191,13 @@ describe('SettingsPanel Google Drive settings', () => {
       fireEvent.click(radio15)
 
       expect(localStorage.getItem('vault-session-ttl')).toBe('15')
-      expect(vaultSessionModule.setTTLConfig).toHaveBeenCalledWith(15)
+      expect(vaultModule.setTTLConfig).toHaveBeenCalledWith(15)
     })
 
     it('Disabled option clears session cache', async () => {
       vi.mocked(vaultModule.isVaultAvailable).mockResolvedValue(true)
       vi.mocked(vaultModule.isUnlocked).mockReturnValue(true)
-      vi.mocked(vaultSessionModule.setTTLConfig).mockImplementation(() => {
+      vi.mocked(vaultModule.setTTLConfig).mockImplementation(() => {
         localStorage.setItem('vault-session-ttl', '0')
         sessionStorage.removeItem('vault-session-cache')
       })
@@ -227,7 +219,7 @@ describe('SettingsPanel Google Drive settings', () => {
       const radioDisabled = screen.getByDisplayValue('0')
       fireEvent.click(radioDisabled)
 
-      expect(vaultSessionModule.setTTLConfig).toHaveBeenCalledWith(0)
+      expect(vaultModule.setTTLConfig).toHaveBeenCalledWith(0)
       expect(sessionStorage.getItem('vault-session-cache')).toBeNull()
     })
   })

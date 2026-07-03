@@ -3,8 +3,7 @@ import 'fake-indexeddb/auto'
 import { IDBFactory } from 'fake-indexeddb'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { resetDb } from '@/infrastructure/db'
-import { VaultCreateModal } from './VaultCreateModal'
-import { VaultUnlockModal } from './VaultUnlockModal'
+import { VaultCreateModal, VaultUnlockModal } from '@byo-prompt/encrypted-vault/react'
 import { VaultGate } from './VaultGate'
 import {
   lockVault,

@@ -5,10 +5,9 @@ import {
   createVault,
   unlockVault,
   tryAutoUnlock,
+  isWebCryptoAvailable,
 } from '@/infrastructure/vault'
-import { isWebCryptoAvailable } from '@/infrastructure/vault/vaultCrypto'
-import { VaultCreateModal } from './VaultCreateModal'
-import { VaultUnlockModal } from './VaultUnlockModal'
+import { VaultCreateModal, VaultUnlockModal } from '@byo-prompt/encrypted-vault/react'
 
 interface VaultGateProps {
   children: ReactNode

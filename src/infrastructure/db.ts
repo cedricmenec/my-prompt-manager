@@ -87,10 +87,6 @@ export interface PromptDB {
       'by-modelId': string
     }
   }
-  encryptedVault: {
-    key: 'vault'
-    value: EncryptedVaultRecord
-  }
 }
 
 export interface EncryptedVaultRecord {
@@ -105,7 +101,7 @@ export interface EncryptedVaultRecord {
 }
 
 const DB_NAME = 'byo-prompt-manager'
-export const DB_VERSION = 10
+export const DB_VERSION = 11
 
 let dbPromise: Promise<IDBPDatabase<PromptDB>> | null = null
 
@@ -162,16 +158,11 @@ export function initDb(): Promise<IDBPDatabase<PromptDB>> {
           console.log(`[DB] v${oldVersion}→${newVersion}: "aiFeatureSettings" already present, skipping`)
         }
 
-        // v8→v9: Create encryptedVault store for the local encrypted vault.
-        if (oldVersion < 9) {
-          console.log('[DB] v9: Creating "encryptedVault" store')
-          db.createObjectStore('encryptedVault', { keyPath: 'key' })
-        }
-        // v9→v10: Safety-net — create encryptedVault if missing. This handles
-        // databases that reached version 9 without the store being created.
-        if (oldVersion >= 9 && !db.objectStoreNames.contains('encryptedVault')) {
-          console.log(`[DB] v${oldVersion}→${newVersion}: Creating missing "encryptedVault" store`)
-          db.createObjectStore('encryptedVault', { keyPath: 'key' })
+        // v10→v11: Remove encryptedVault store — responsibility moved to the
+        // @byo-prompt/encrypted-vault SDK which manages its own database.
+        if (db.objectStoreNames.contains('encryptedVault')) {
+          console.log('[DB] v11: Removing "encryptedVault" store (moved to SDK)')
+          db.deleteObjectStore('encryptedVault')
         }
 
         console.log('[DB] Stores after upgrade:', [...db.objectStoreNames])

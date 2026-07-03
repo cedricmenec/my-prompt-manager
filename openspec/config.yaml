@@ -18,3 +18,10 @@ schema: spec-driven
 #       - Always include a "Non-goals" section
 #     tasks:
 #       - Break tasks into chunks of max 2 hours
+
+# Specs managed by this project
+specs:
+  - encrypted-vault
+  - encrypted-vault-core
+  - encrypted-vault-react
+  - encrypted-vault-storage-indexeddb

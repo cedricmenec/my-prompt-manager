@@ -1,20 +1,14 @@
 /**
- * Session-based passphrase cache for the encrypted vault.
+ * Session-based passphrase cache for the encrypted vault SDK.
  *
  * Stores the passphrase in `sessionStorage` (per-tab, cleared on tab close)
  * with an `unlockedAt` timestamp. On page load, checks a configurable TTL
  * before auto-unlocking the vault.
  *
- * TTL config is persisted in `localStorage` (survives page reloads) under
- * the key `vault-session-ttl`. Passphrase cache is in `sessionStorage`.
+ * TTL config is persisted in `localStorage` (survives page reloads).
  */
 
-// ---------------------------------------------------------------------------
-// Types
-// ---------------------------------------------------------------------------
-
-/** TTL preset values in minutes. `0` = Disabled, `-1` = Session (no expiry). */
-export type TTLMinutes = 0 | 15 | 60 | 240 | -1
+import type { TTLMinutes } from './types'
 
 // ---------------------------------------------------------------------------
 // Constants

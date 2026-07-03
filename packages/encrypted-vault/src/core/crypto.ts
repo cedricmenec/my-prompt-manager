@@ -1,5 +1,5 @@
 /**
- * Low-level Web Crypto API helpers for the encrypted vault.
+ * Low-level Web Crypto API helpers for the encrypted vault SDK.
  *
  * Uses PBKDF2-SHA256 (600k iterations) for key derivation and
  * AES-256-GCM for authenticated encryption. All inputs/outputs
@@ -101,7 +101,7 @@ export async function deriveVerifyHash(
       hash: 'SHA-256',
     },
     keyMaterial,
-    256, // 32 bytes
+    256,
   )
 
   return new Uint8Array(bits)
@@ -136,4 +136,18 @@ export async function decrypt(
     ciphertext as BufferSource,
   )
   return new TextDecoder().decode(decrypted)
+}
+
+// ---------------------------------------------------------------------------
+// Utility
+// ---------------------------------------------------------------------------
+
+/** Constant-time-ish comparison of two Uint8Arrays. */
+export function arraysEqual(a: Uint8Array, b: Uint8Array): boolean {
+  if (a.length !== b.length) return false
+  let diff = 0
+  for (let i = 0; i < a.length; i++) {
+    diff |= a[i]! ^ b[i]!
+  }
+  return diff === 0
 }

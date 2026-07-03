@@ -1,24 +1,23 @@
-import { useEffect, useState, useRef } from 'react'
-import { Button } from '@/shared/ui/Button'
-import { useToast } from '@/shared/ui/useToast'
-import {
-  isVaultAvailable,
-  isUnlocked,
-  exportVault,
-  importVault,
-  changePassphrase,
-  deleteVault,
-  createVault,
-  lockVault,
-  isWebCryptoAvailable,
-  getTTLConfig,
-  setTTLConfig,
-} from '@/infrastructure/vault'
-import type { TTLMinutes } from '@/infrastructure/vault'
+import { useState, useRef, useEffect } from 'react'
+import type { Vault } from '../core/vault'
+import type { VaultPayloadBase, TTLMinutes } from '../core/types'
+import { getTTLConfig } from '../core/session'
+import { isWebCryptoAvailable } from '../core/crypto'
 
-interface VaultStatus {
-  available: boolean
-  unlocked: boolean
+export interface VaultSettingsClassNames {
+  section?: string
+  title?: string
+  status?: string
+  button?: string
+  dangerButton?: string
+  ttlGroup?: string
+  ttlOption?: string
+  passphraseForm?: string
+}
+
+export interface VaultSettingsProps<TPayload extends VaultPayloadBase> {
+  vault: Vault<TPayload>
+  classNames?: VaultSettingsClassNames
 }
 
 const TTL_OPTIONS: { value: TTLMinutes; label: string; description: string }[] = [
@@ -29,36 +28,51 @@ const TTL_OPTIONS: { value: TTLMinutes; label: string; description: string }[] =
   { value: -1, label: 'Session', description: 'No auto-lock (until tab closed)' },
 ]
 
-export function VaultSettingsSection() {
-  const { show: showToast } = useToast()
-  const [status, setStatus] = useState<VaultStatus>({ available: false, unlocked: false })
+/**
+ * Comprehensive vault management panel.
+ *
+ * Provides status display, export/import, change passphrase,
+ * delete vault, and session TTL configuration.
+ */
+export function VaultSettings<TPayload extends VaultPayloadBase>({
+  vault,
+  classNames = {},
+}: VaultSettingsProps<TPayload>) {
+  const [status, setStatus] = useState<{ available: boolean; unlocked: boolean }>({
+    available: false,
+    unlocked: false,
+  })
   const [isBusy, setIsBusy] = useState(false)
   const [showChangePassphrase, setShowChangePassphrase] = useState(false)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [currentPassphrase, setCurrentPassphrase] = useState('')
   const [newPassphrase, setNewPassphrase] = useState('')
   const [confirmNewPassphrase, setConfirmNewPassphrase] = useState('')
-  const [_deletePassphrase, setDeletePassphrase] = useState('')
   const [ttlConfig, setTtlConfig] = useState<TTLMinutes>(getTTLConfig)
+  const [toastMessage, setToastMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null)
   const importInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
-    isVaultAvailable().then((available) => {
-      setStatus({ available, unlocked: isUnlocked() })
+    vault.isAvailable().then((available) => {
+      setStatus({ available, unlocked: vault.isUnlocked() })
     })
-  }, [])
+  }, [vault])
 
-  // Refresh status after operations
   const refreshStatus = async () => {
-    const available = await isVaultAvailable()
-    setStatus({ available, unlocked: isUnlocked() })
+    const available = await vault.isAvailable()
+    setStatus({ available, unlocked: vault.isUnlocked() })
+  }
+
+  const showToast = (text: string, type: 'success' | 'error') => {
+    setToastMessage({ text, type })
+    setTimeout(() => setToastMessage(null), 3000)
   }
 
   // --- Export ---
   const handleExport = async () => {
     setIsBusy(true)
     try {
-      const data = await exportVault()
+      const data = await vault.export()
       if (!data) {
         showToast('No vault to export.', 'error')
         return
@@ -69,7 +83,7 @@ export function VaultSettingsSection() {
       const a = document.createElement('a')
       const date = new Date().toISOString().slice(0, 10)
       a.href = url
-      a.download = `byo-vault-${date}.json`
+      a.download = `vault-${date}.json`
       document.body.appendChild(a)
       a.click()
       document.body.removeChild(a)
@@ -98,14 +112,13 @@ export function VaultSettingsSection() {
       const text = await file.text()
       const jsonData = JSON.parse(text)
 
-      // Prompt for passphrase
       const passphrase = window.prompt('Enter the passphrase for the imported vault:')
       if (!passphrase) {
         showToast('Import cancelled.', 'error')
         return
       }
 
-      await importVault(jsonData, passphrase)
+      await vault.import(jsonData, passphrase)
       await refreshStatus()
       showToast('Vault imported and unlocked.', 'success')
     } catch (err) {
@@ -128,7 +141,7 @@ export function VaultSettingsSection() {
 
     setIsBusy(true)
     try {
-      await changePassphrase(currentPassphrase, newPassphrase)
+      await vault.changePassphrase(currentPassphrase, newPassphrase)
       setShowChangePassphrase(false)
       setCurrentPassphrase('')
       setNewPassphrase('')
@@ -145,10 +158,9 @@ export function VaultSettingsSection() {
   const handleDeleteVault = async () => {
     setIsBusy(true)
     try {
-      await deleteVault()
-      lockVault()
+      await vault.delete()
+      vault.lock()
       setShowDeleteConfirm(false)
-      setDeletePassphrase('')
       await refreshStatus()
       showToast('Vault deleted. Keys are now session-only.', 'success')
     } catch (err) {
@@ -175,7 +187,7 @@ export function VaultSettingsSection() {
 
     setIsBusy(true)
     try {
-      await createVault(passphrase)
+      await vault.create(passphrase)
       await refreshStatus()
       showToast('Vault created.', 'success')
     } catch (err) {
@@ -185,9 +197,16 @@ export function VaultSettingsSection() {
     }
   }
 
+  // --- TTL ---
+  const handleTTLChange = (value: TTLMinutes) => {
+    setTtlConfig(value)
+    vault.setSessionTTL(value)
+    showToast(`Session timeout set to ${TTL_OPTIONS.find((o) => o.value === value)?.label ?? value}`, 'success')
+  }
+
   if (!isWebCryptoAvailable()) {
     return (
-      <div className="grid gap-5">
+      <div className={classNames.section ?? 'grid gap-5'}>
         <p className="text-sm text-text-muted">
           Encryption is not available in this browser context. Vault features
           require a secure context (HTTPS or localhost).
@@ -196,9 +215,14 @@ export function VaultSettingsSection() {
     )
   }
 
+  const sectionClass = classNames.section ?? 'grid gap-5'
+  const titleClass = classNames.title ?? 'text-sm font-semibold uppercase tracking-wider text-text'
+  const buttonClass = classNames.button ?? 'rounded-md border border-border bg-surface px-4 py-2 text-sm text-text hover:bg-surface-hover disabled:opacity-50'
+  const dangerBtnClass = classNames.dangerButton ?? 'rounded-md bg-red-600 px-4 py-2 text-sm text-white hover:bg-red-700 disabled:opacity-50'
+
   return (
-    <div className="grid gap-5">
-      <h3 className="text-sm font-semibold uppercase tracking-wider text-text">Encrypted Vault</h3>
+    <div className={sectionClass}>
+      <h3 className={titleClass}>Encrypted Vault</h3>
 
       {/* Warning */}
       <div className="rounded-lg border border-yellow-300 bg-yellow-50 p-3 text-sm text-yellow-800">
@@ -207,7 +231,7 @@ export function VaultSettingsSection() {
       </div>
 
       {/* Status */}
-      <div className="text-sm text-text">
+      <div className={classNames.status ?? 'text-sm text-text'}>
         <strong>Status:</strong>{' '}
         {status.available
           ? status.unlocked
@@ -216,25 +240,38 @@ export function VaultSettingsSection() {
           : 'No vault configured'}
       </div>
 
+      {/* Toast */}
+      {toastMessage && (
+        <div
+          className={`rounded-md px-3 py-2 text-sm ${
+            toastMessage.type === 'success'
+              ? 'bg-green-100 text-green-800'
+              : 'bg-red-100 text-red-800'
+          }`}
+        >
+          {toastMessage.text}
+        </div>
+      )}
+
       {/* Actions when no vault */}
       {!status.available && (
         <div className="flex gap-3">
-          <Button onClick={handleCreateVault} disabled={isBusy}>
+          <button onClick={handleCreateVault} disabled={isBusy} className={buttonClass}>
             Create vault
-          </Button>
+          </button>
         </div>
       )}
 
       {/* Actions when vault exists */}
       {status.available && (
         <div className="flex flex-wrap gap-3">
-          <Button variant="secondary" onClick={handleExport} disabled={isBusy}>
+          <button onClick={handleExport} disabled={isBusy} className={buttonClass}>
             Export vault
-          </Button>
+          </button>
 
-          <Button variant="secondary" onClick={handleImportClick} disabled={isBusy}>
+          <button onClick={handleImportClick} disabled={isBusy} className={buttonClass}>
             Import vault
-          </Button>
+          </button>
           <input
             ref={importInputRef}
             type="file"
@@ -243,35 +280,35 @@ export function VaultSettingsSection() {
             onChange={handleImportFile}
           />
 
-          <Button
-            variant="secondary"
+          <button
             onClick={() => setShowChangePassphrase(!showChangePassphrase)}
             disabled={isBusy}
+            className={buttonClass}
           >
             Change passphrase
-          </Button>
+          </button>
 
-          <Button
-            variant="danger"
+          <button
             onClick={() => setShowDeleteConfirm(!showDeleteConfirm)}
             disabled={isBusy}
+            className={dangerBtnClass}
           >
             Delete vault
-          </Button>
+          </button>
         </div>
       )}
 
       {/* Change passphrase form */}
       {showChangePassphrase && (
-        <div className="rounded-lg border border-border p-4 space-y-3">
+        <div className={classNames.passphraseForm ?? 'rounded-lg border border-border p-4 space-y-3'}>
           <h4 className="text-sm font-medium text-text-heading">Change passphrase</h4>
 
           <div>
-            <label htmlFor="current-passphrase" className="mb-1 block text-xs text-text-muted">
+            <label htmlFor="sdk-current-passphrase" className="mb-1 block text-xs text-text-muted">
               Current passphrase
             </label>
             <input
-              id="current-passphrase"
+              id="sdk-current-passphrase"
               type="password"
               value={currentPassphrase}
               onChange={(e) => setCurrentPassphrase(e.target.value)}
@@ -280,11 +317,11 @@ export function VaultSettingsSection() {
           </div>
 
           <div>
-            <label htmlFor="new-passphrase" className="mb-1 block text-xs text-text-muted">
+            <label htmlFor="sdk-new-passphrase" className="mb-1 block text-xs text-text-muted">
               New passphrase
             </label>
             <input
-              id="new-passphrase"
+              id="sdk-new-passphrase"
               type="password"
               value={newPassphrase}
               onChange={(e) => setNewPassphrase(e.target.value)}
@@ -293,11 +330,11 @@ export function VaultSettingsSection() {
           </div>
 
           <div>
-            <label htmlFor="confirm-new-passphrase" className="mb-1 block text-xs text-text-muted">
+            <label htmlFor="sdk-confirm-new-passphrase" className="mb-1 block text-xs text-text-muted">
               Confirm new passphrase
             </label>
             <input
-              id="confirm-new-passphrase"
+              id="sdk-confirm-new-passphrase"
               type="password"
               value={confirmNewPassphrase}
               onChange={(e) => setConfirmNewPassphrase(e.target.value)}
@@ -305,22 +342,9 @@ export function VaultSettingsSection() {
             />
           </div>
 
-          <div className="flex justify-end gap-2">
-            <Button
-              variant="secondary"
-              onClick={() => {
-                setShowChangePassphrase(false)
-                setCurrentPassphrase('')
-                setNewPassphrase('')
-                setConfirmNewPassphrase('')
-              }}
-            >
-              Cancel
-            </Button>
-            <Button onClick={handleChangePassphrase} disabled={isBusy}>
-              Change passphrase
-            </Button>
-          </div>
+          <button onClick={handleChangePassphrase} disabled={isBusy} className={buttonClass}>
+            Change passphrase
+          </button>
         </div>
       )}
 
@@ -329,54 +353,36 @@ export function VaultSettingsSection() {
         <div className="rounded-lg border border-red-300 bg-red-50 p-4 space-y-3">
           <h4 className="text-sm font-medium text-red-800">Delete vault?</h4>
           <p className="text-sm text-red-700">
-            This will permanently remove the encrypted vault. API keys will
-            revert to session-only mode.
+            This will permanently delete your encrypted vault and all stored API keys.
+            This action cannot be undone.
           </p>
-          <div className="flex justify-end gap-2">
-            <Button
-              variant="secondary"
-              onClick={() => {
-                setShowDeleteConfirm(false)
-                setDeletePassphrase('')
-              }}
-            >
-              Cancel
-            </Button>
-            <Button variant="danger" onClick={handleDeleteVault} disabled={isBusy}>
-              Delete vault
-            </Button>
-          </div>
+          <button onClick={handleDeleteVault} disabled={isBusy} className={dangerBtnClass}>
+            {isBusy ? 'Deleting...' : 'Confirm delete vault'}
+          </button>
         </div>
       )}
 
-      {/* Session timeout — only visible when a vault exists */}
+      {/* Session TTL configuration */}
       {status.available && (
-        <div className="rounded-lg border border-border p-4 space-y-3">
+        <div className={classNames.ttlGroup ?? 'grid gap-2'}>
           <h4 className="text-sm font-medium text-text-heading">Session timeout</h4>
-          <p className="text-xs text-text-muted">
-            Controls how long the vault stays unlocked after a page reload.
-            Longer intervals are more convenient but less secure.
-          </p>
-          <div className="space-y-2" role="radiogroup" aria-label="Session timeout">
-            {TTL_OPTIONS.map((opt) => (
-              <label
-                key={opt.value}
-                className="flex cursor-pointer items-center gap-2 text-sm text-text"
+          <div className="flex flex-wrap gap-2">
+            {TTL_OPTIONS.map((option) => (
+              <button
+                key={option.value}
+                onClick={() => handleTTLChange(option.value)}
+                className={
+                  classNames.ttlOption ??
+                  `rounded-md border px-3 py-1.5 text-xs transition-colors ${
+                    ttlConfig === option.value
+                      ? 'border-blue-500 bg-blue-50 text-blue-700'
+                      : 'border-border bg-surface text-text-muted hover:bg-surface-hover'
+                  }`
+                }
+                title={option.description}
               >
-                <input
-                  type="radio"
-                  name="vault-ttl"
-                  value={opt.value}
-                  checked={ttlConfig === opt.value}
-                  onChange={() => {
-                    setTtlConfig(opt.value)
-                    setTTLConfig(opt.value)
-                  }}
-                  className="accent-primary"
-                />
-                <span className="font-medium">{opt.label}</span>
-                <span className="text-xs text-text-muted">— {opt.description}</span>
-              </label>
+                {option.label}
+              </button>
             ))}
           </div>
         </div>
