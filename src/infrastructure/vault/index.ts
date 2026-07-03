@@ -11,6 +11,7 @@
 import { createVault as createSdkVault } from '@byo-prompt/encrypted-vault/core'
 import { createIndexedDbStorage } from '@byo-prompt/encrypted-vault/storage/indexeddb'
 import type { VaultPayload } from './payload'
+import type { ExportableVault } from '@byo-prompt/encrypted-vault/core'
 
 export type { VaultPayload } from './payload'
 
@@ -62,15 +63,15 @@ export function persistPayload(): Promise<void> {
   return vault.persistPayload()
 }
 
-export function exportVault(): Promise<Record<string, unknown> | null> {
+export function exportVault(): Promise<ExportableVault | null> {
   return vault.export()
 }
 
 export function importVault(
-  jsonData: Record<string, unknown>,
+  jsonData: ExportableVault,
   passphrase: string,
 ): Promise<void> {
-  return vault.import(jsonData as any, passphrase)
+  return vault.import(jsonData, passphrase)
 }
 
 export function changePassphrase(
@@ -95,3 +96,4 @@ export function tryAutoUnlock(): Promise<boolean> {
 export { isWebCryptoAvailable } from '@byo-prompt/encrypted-vault/core'
 export { getTTLConfig, setTTLConfig } from '@byo-prompt/encrypted-vault/core'
 export type { TTLMinutes } from '@byo-prompt/encrypted-vault/core'
+export type { ExportableVault } from '@byo-prompt/encrypted-vault/core'

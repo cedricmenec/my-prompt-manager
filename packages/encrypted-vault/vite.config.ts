@@ -1,5 +1,6 @@
 import { defineConfig } from 'vitest/config'
 import { resolve } from 'path'
+import dts from 'vite-plugin-dts'
 
 // https://vite.dev/config/
 export default defineConfig({
@@ -23,6 +24,13 @@ export default defineConfig({
     target: 'es2023',
     outDir: 'dist',
   },
+  plugins: [
+    dts({
+      tsconfigPath: resolve(__dirname, 'tsconfig.json'),
+      include: ['src'],
+      outDir: 'dist',
+    }),
+  ],
   test: {
     environment: 'jsdom',
     globals: true,
