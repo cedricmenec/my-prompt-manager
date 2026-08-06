@@ -1,139 +1,126 @@
 # BYO Prompt Manager
 
-A **local-first, bring-your-own-key** web app to create, organize, and reuse AI prompts.  
-All data stays in your browser. No server. No account needed.
+BYO Prompt Manager is a local-first web app for people who keep a personal library of AI prompts. It lets you create, search, organize, edit, and reuse text and image prompts without an account or an application backend.
 
-## What is this?
+Prompt data is stored in IndexedDB in your browser. Network access is optional and happens only when you use an external feature such as OpenRouter generation or Google Drive import, export, and snapshots.
 
-This app helps you manage a personal library of prompts for AI tools (ChatGPT, Claude, etc.).
+## Main features
 
-- Write and edit prompts in Markdown
-- Add tags, description, notes, image references, and temperature
-- All data is stored in your browser (IndexedDB) — nothing is sent to a server
-- Works offline after the first load
+- Create and edit text or image prompts.
+- Add descriptions, notes, tags, favorites, temperature values, and reference images.
+- Search prompts and browse them as a list or image gallery.
+- Store prompts and local image assets in the browser.
+- Import and export versioned JSON backups.
+- Use an OpenRouter API key to generate a prompt title or description.
+- Export, import, and restore visible files in a user-owned Google Drive folder.
+- Protect API credentials in an optional encrypted local vault.
 
-## Tech stack
+## Getting Started
 
-- **React 19** + **TypeScript** (strict mode)
-- **Vite** for dev server and build
-- **Tailwind CSS v4** for styling
-- **Zod** for data validation
-- **idb** for IndexedDB access
-- **js-yaml** for Markdown frontmatter
-- **Vitest** for unit tests
+### Prerequisites
 
-## Requirements
+The repository workflow uses:
 
-- [Node.js](https://nodejs.org/) 18 or later
-- [pnpm](https://pnpm.io/) (`npm install -g pnpm`)
+- [Node.js](https://nodejs.org/) 22
+- [pnpm](https://pnpm.io/) 10
 
-## Getting started
+### Run the app
 
-### 1. Clone the repo
+1. Clone the repository.
 
-```bash
-git clone https://github.com/your-username/byo-prompt-manager-webapp.git
-cd byo-prompt-manager-webapp
-```
+   ```bash
+   git clone https://github.com/cedricmenec/my-prompt-manager.git
+   cd my-prompt-manager
+   ```
 
-### 2. Install dependencies
+2. Install the dependencies.
 
-```bash
-pnpm install
-```
+   ```bash
+   pnpm install
+   ```
 
-### 3. Start the dev server
+3. Start the development server.
 
-```bash
-pnpm dev
-```
+   ```bash
+   pnpm dev
+   ```
 
-Open [http://localhost:5173](http://localhost:5173) in your browser.
+4. Open <http://localhost:5173/my-prompt-manager/>.
 
-## Available commands
+On the first visit, create an encrypted vault or choose the session-only option. When the prompt list appears, select **New Prompt** to create your first prompt.
 
-| Command | What it does |
-|---|---|
-| `pnpm dev` | Start the local dev server with hot reload |
-| `pnpm build` | Build the app for production (output in `dist/`) |
-| `pnpm preview` | Preview the production build locally |
-| `pnpm test` | Run the unit test suite |
-| `pnpm test:coverage` | Run tests and show coverage report |
+## Privacy and data
 
-## How to use the app
+The app has no application server and does not require an account.
 
-1. Click **+ New Prompt** to create your first prompt.
-2. Fill in the title, content (Markdown supported), and optional tags.
-3. Click **Save** — the prompt appears in the list.
-4. Click any prompt card to open the detail panel.
-5. Use **Edit** to change a prompt, **Copy** to copy content to clipboard, or **Delete** to remove it.
+- Prompts, settings, and local reference images stay in browser storage by default.
+- An OpenRouter key stays in memory in session-only mode. If the encrypted vault is enabled and unlocked, the key can be stored locally in the vault.
+- Prompt content is sent to OpenRouter only when you start an AI generation action.
+- Google OAuth access tokens stay in memory for the current browser session.
+- Local JSON exports and Google Drive files are not encrypted. They can contain prompt data and local prompt images.
+- Exports do not contain API keys, OAuth tokens, client secrets, or vault passphrases.
 
-## AI assistant and BYOK keys
+Keep your API keys private. Back up important prompts before clearing browser data. An import replaces the current local prompt collection after confirmation.
 
-Settings includes **API & Models** for loading an OpenRouter model catalog with your own API key and enabling models for app features. The key is kept in memory for the current browser session only; it is not saved to localStorage, IndexedDB, JSON exports, Drive exports, or Drive snapshots. A page reload clears it.
+## Optional OpenRouter setup
 
-Settings also includes **AI Features**. The first feature, **Prompt input assistant**, stores only a non-sensitive provider/model selection and can generate a prompt title or description from the current prompt content. Generation is explicit: prompt content is sent to OpenRouter only when you click an AI generation control in edit mode. Generated values update the edit form and are saved only when you click **Save**.
+1. Open **Settings** and select **API & Models**.
+2. Enter your own OpenRouter API key.
+3. Load the model catalog and enable a text or multimodal model.
+4. Open **AI Features** and select the model for the prompt input assistant.
 
-Prompt records no longer include a prompt-level `model` field. Legacy imports or Markdown frontmatter that contain `model` are accepted, but the field is stripped and future exports omit it.
+Generation is always explicit. Generated values are added to the edit form and are stored only after you save the prompt. API use and provider costs remain your responsibility.
 
-## Google Drive import, export, and snapshots
+## Optional Google Drive setup
 
-Google Drive is optional and user-owned. The app stays static and browser-only: it does not use a
-backend, a shared OAuth client secret, a refresh token store, or an app-owned Google account.
+The Drive integration uses your own Google Cloud project and Drive folder. It does not use a backend, shared client secret, refresh-token store, or app-owned Google account.
 
-### Google Cloud setup
+1. Create or select a project in Google Cloud Console.
+2. Configure its OAuth consent screen.
+3. Create an OAuth client ID with the **Web application** type.
+4. Add the app origin as an authorized JavaScript origin. For local development, use `http://localhost:5173`. Do not add `/my-prompt-manager/` to the origin.
+5. Create a visible folder in your Google Drive.
+6. In **Settings**, enter the OAuth client ID and the Drive folder URL or ID, then save.
+7. Connect Google Drive and use **Test folder** to check write access.
 
-1. In Google Cloud Console, create or choose a project.
-2. Configure the OAuth consent screen for your own use.
-3. Create an OAuth Client ID with the **Web application** type.
-4. Add the **Authorized JavaScript origin** where this static app runs, such as
-   `http://localhost:5173` for development or your GitHub Pages origin for production.
-   Do not include a path like `/my-prompt-manager/` in the origin.
-5. Copy only the OAuth Client ID into Settings. Do not create, paste, store, or share a client
-   secret for this browser app.
+The app requests the `drive.file` scope. The folder test creates and then deletes a small temporary JSON file. Drive snapshots are optional and use a configurable interval from 5 to 1,440 minutes.
 
-The Drive integration requests `https://www.googleapis.com/auth/drive.file`. Access tokens are kept
-in memory for the current browser session only. When the session expires, reconnect from Settings.
-The app uses the Google Identity Services token popup flow, so it does not require an Authorized
-redirect URI.
+## Commands
 
-### Drive folder setup
-
-Create a visible Google Drive folder yourself, then paste either its folder URL or folder ID into
-Settings. Use **Test folder** to confirm the app can write to it. The test creates a small
-temporary `.byo-prompt-manager-folder-test-*.json` file and then deletes it; this avoids relying on
-folder metadata reads that may be blocked by the `drive.file` scope. Drive Picker, hidden
-`appDataFolder` sync, conflict resolution, encrypted vault support, and encrypted secret export are
-deferred.
-
-### Workflows
-
-- **Local export/import**: Settings -> Data keeps the offline JSON download and file import flow.
-  It does not require Google Drive.
-- **Drive export**: Settings -> Google Drive -> connect, then use **Export to Drive**. The app
-  uploads the same prompt export envelope to the configured folder.
-- **Drive import**: load Drive exports, select a JSON export, and confirm replacement. The same
-  parsing, schema validation, and replacement flow as local import is used.
-- **Snapshots**: enable visible Drive snapshots and keep the default 15 minute interval or choose a
-  whole number from 5 to 1440 minutes. Snapshots are created after successful manual Drive exports,
-  before Drive imports/restores when possible, and automatically while connected when exportable
-  data changed since the last successful snapshot.
-- **Restore**: load snapshots, select one, and confirm replacement. Invalid or unsupported snapshot
-  payloads are rejected before local prompt data is modified.
-
-Prompt exports and snapshots are unencrypted by default and are visible files in your Drive folder.
-They include prompt data, local prompt image assets, schema metadata, and app metadata. They do not
-include AI API keys, OAuth access tokens, OAuth refresh tokens, client secrets, passphrases, or
-connector secrets.
+| Command | Purpose |
+| --- | --- |
+| `pnpm dev` | Start the Vite development server. |
+| `pnpm build` | Build the vault package, type-check the workspace, and create `dist/`. |
+| `pnpm preview` | Preview the production build locally. |
+| `pnpm lint` | Run ESLint. |
+| `pnpm test` | Run the Vitest test suite once. |
+| `pnpm test:watch` | Run Vitest in watch mode. |
+| `pnpm test:coverage` | Run tests and create a coverage report. |
 
 ## Project structure
 
-```
+```text
 src/
-├── app/              # App root component
-├── domain/           # Prompt schema (Zod) and Markdown parser
-├── infrastructure/   # IndexedDB repository
-├── features/prompts/ # UI components and state (context + reducer)
-├── shared/ui/        # Reusable UI primitives (Button, Badge, Modal, Toast)
-└── styles/           # Global CSS and Tailwind theme tokens
+├── app/              Application root
+├── application/      Application services
+├── domain/           Prompt schemas and domain logic
+├── features/         Prompt, layout, settings, and vault UI
+├── infrastructure/   IndexedDB, AI, Drive, import, and export adapters
+├── shared/           Shared UI and utilities
+└── styles/           Global styles and Tailwind theme
+packages/
+└── encrypted-vault/  Reusable encrypted vault SDK
 ```
+
+The app is built with React, TypeScript, Vite, Tailwind CSS, Zod, IndexedDB, and Vitest. It is deployed as static files through GitHub Pages.
+
+## Contributing
+
+The project is not yet mature enough to support external contributions effectively. Contribution guidelines will be published as soon as the process is ready. Thank you for your interest and understanding.
+
+## Next
+
+- Read the [project architecture and conventions](openspec/project.md).
+- Browse the [current behavior specifications](openspec/specs/).
+- See the [`@byo-prompt/encrypted-vault` package guide](packages/encrypted-vault/README.md).
+- Review [features that are still deferred](deferred-features.md).
