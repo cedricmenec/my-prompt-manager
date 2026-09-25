@@ -8,10 +8,10 @@
  * and store `encryptedVault` (separate from the app's main database).
  */
 
-import { createVault as createSdkVault } from '@activarium/encrypted-vault/core'
-import { createIndexedDbStorage } from '@activarium/encrypted-vault/storage/indexeddb'
+import { createVault as createSdkVault } from '@activarium/local-secret-vault/core'
+import { createIndexedDbStorage } from '@activarium/local-secret-vault/storage/indexeddb'
 import type { VaultPayload } from './payload'
-import type { ExportableVault } from '@activarium/encrypted-vault/core'
+import type { ExportableVault } from '@activarium/local-secret-vault/core'
 
 export type { VaultPayload } from './payload'
 
@@ -93,7 +93,7 @@ export function tryAutoUnlock(): Promise<boolean> {
 // SDK re-exports for consumers that use SDK modules directly
 // ---------------------------------------------------------------------------
 
-export { isWebCryptoAvailable } from '@activarium/encrypted-vault/core'
-export { getTTLConfig, setTTLConfig } from '@activarium/encrypted-vault/core'
-export type { TTLMinutes } from '@activarium/encrypted-vault/core'
-export type { ExportableVault } from '@activarium/encrypted-vault/core'
+export { isWebCryptoAvailable } from '@activarium/local-secret-vault/core'
+export { getTTLConfig, setTTLConfig } from '@activarium/local-secret-vault/core'
+export type { TTLMinutes } from '@activarium/local-secret-vault/core'
+export type { ExportableVault } from '@activarium/local-secret-vault/core'

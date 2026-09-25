@@ -101,15 +101,15 @@ The app requests the `drive.file` scope. The folder test creates and then delete
 
 ```text
 src/
-├── app/              Application root
-├── application/      Application services
-├── domain/           Prompt schemas and domain logic
-├── features/         Prompt, layout, settings, and vault UI
-├── infrastructure/   IndexedDB, AI, Drive, import, and export adapters
-├── shared/           Shared UI and utilities
-└── styles/           Global styles and Tailwind theme
+├── app/               Application root
+├── application/       Application services
+├── domain/            Prompt schemas and domain logic
+├── features/          Prompt, layout, settings, and vault UI
+├── infrastructure/    IndexedDB, AI, Drive, import, and export adapters
+├── shared/            Shared UI and utilities
+└── styles/            Global styles and Tailwind theme
 packages/
-└── encrypted-vault/  Reusable encrypted vault SDK
+└── local-secret-vault/ Reusable local secret vault SDK
 ```
 
 The app is built with React, TypeScript, Vite, Tailwind CSS, Zod, IndexedDB, and Vitest. It is deployed as static files through GitHub Pages.
@@ -122,5 +122,5 @@ The project is not yet mature enough to support external contributions effective
 
 - Read the [project architecture and conventions](openspec/project.md).
 - Browse the [current behavior specifications](openspec/specs/).
-- See the [`@activarium/encrypted-vault` package guide](packages/encrypted-vault/README.md).
+- See the [`@activarium/local-secret-vault` package guide](packages/local-secret-vault/README.md).
 - Review [features that are still deferred](deferred-features.md).

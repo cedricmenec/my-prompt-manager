@@ -1,7 +1,7 @@
 /**
  * React bindings for the encrypted vault SDK.
  *
- * Import from `@activarium/encrypted-vault/react`.
+ * Import from `@activarium/local-secret-vault/react`.
  */
 
 export { useVault } from './useVault'

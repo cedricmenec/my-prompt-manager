@@ -21,7 +21,7 @@ schema: spec-driven
 
 # Specs managed by this project
 specs:
-  - encrypted-vault
-  - encrypted-vault-core
-  - encrypted-vault-react
-  - encrypted-vault-storage-indexeddb
+  - local-secret-vault
+  - local-secret-vault-core
+  - local-secret-vault-react
+  - local-secret-vault-storage-indexeddb

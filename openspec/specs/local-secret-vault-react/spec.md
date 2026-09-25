@@ -1,8 +1,8 @@
-# Encrypted Vault React Bindings
+# Local Secret Vault React Bindings
 
 ## Purpose
 
-Provides optional React hooks and generic UI components for the `@activarium/encrypted-vault` SDK. Includes `useVault()` hook for state management, `VaultGate` for guarding application rendering, and modal components for vault creation, unlock, and settings.
+Provides optional React hooks and generic UI components for the `@activarium/local-secret-vault` SDK. Includes `useVault()` hook for state management, `VaultGate` for guarding application rendering, and modal components for vault creation, unlock, and settings.
 
 ## Requirements
 

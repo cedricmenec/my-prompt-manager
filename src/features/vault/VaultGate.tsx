@@ -7,7 +7,7 @@ import {
   tryAutoUnlock,
   isWebCryptoAvailable,
 } from '@/infrastructure/vault'
-import { VaultCreateModal, VaultUnlockModal } from '@activarium/encrypted-vault/react'
+import { VaultCreateModal, VaultUnlockModal } from '@activarium/local-secret-vault/react'
 
 interface VaultGateProps {
   children: ReactNode

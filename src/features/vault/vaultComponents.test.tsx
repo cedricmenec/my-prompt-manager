@@ -3,7 +3,7 @@ import 'fake-indexeddb/auto'
 import { IDBFactory } from 'fake-indexeddb'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { resetDb } from '@/infrastructure/db'
-import { VaultCreateModal, VaultUnlockModal } from '@activarium/encrypted-vault/react'
+import { VaultCreateModal, VaultUnlockModal } from '@activarium/local-secret-vault/react'
 import { VaultGate } from './VaultGate'
 import {
   lockVault,

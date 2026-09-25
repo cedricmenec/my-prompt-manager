@@ -1,15 +1,15 @@
-# Encrypted Vault
+# Local Secret Vault
 
 ## Purpose
 
 Provides a local encrypted vault for persisting sensitive user data (API keys, future OAuth tokens) in IndexedDB using a user-supplied passphrase. The vault uses Web Crypto API (PBKDF2 + AES-256-GCM) and keeps the derived encryption key in memory only.
 
-*This spec is maintained as an app-level adapter. The core vault logic is now provided by the `@activarium/encrypted-vault` SDK package.*
+*This spec is maintained as an app-level adapter. The core vault logic is now provided by the `@activarium/local-secret-vault` SDK package.*
 
 ## Requirements
 
 ### Requirement: IndexedDB encrypted vault store
-The system SHALL create the `encryptedVault` IndexedDB object store within the `byo-prompt-manager` database. The store is now managed by the `@activarium/encrypted-vault` SDK's IndexedDB storage plugin, not by the app's database upgrade logic.
+The system SHALL create the `encryptedVault` IndexedDB object store within the `byo-prompt-manager` database. The store is now managed by the `@activarium/local-secret-vault` SDK's IndexedDB storage plugin, not by the app's database upgrade logic.
 
 #### Scenario: Store is created by SDK on first vault access
 - **WHEN** the SDK storage plugin is initialized with `dbName: 'byo-prompt-manager'` and `storeName: 'encryptedVault'`

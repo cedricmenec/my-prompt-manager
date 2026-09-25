@@ -1,8 +1,8 @@
-# Encrypted Vault Storage — IndexedDB
+# Local Secret Vault Storage — IndexedDB
 
 ## Purpose
 
-Provides a built-in `VaultStorage` implementation for the `@activarium/encrypted-vault` SDK using the `idb` library and the browser's IndexedDB API. The storage plugin manages its own database connection and object store, independent of the host application's database schema.
+Provides a built-in `VaultStorage` implementation for the `@activarium/local-secret-vault` SDK using the `idb` library and the browser's IndexedDB API. The storage plugin manages its own database connection and object store, independent of the host application's database schema.
 
 ## Requirements
 

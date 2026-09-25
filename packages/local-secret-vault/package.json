@@ -1,7 +1,7 @@
 {
-  "name": "@activarium/encrypted-vault",
+  "name": "@activarium/local-secret-vault",
   "version": "0.1.0",
-  "description": "Local-first encrypted vault SDK — PBKDF2 + AES-256-GCM vault lifecycle, session cache with TTL, IndexedDB storage plugin, and optional React bindings",
+  "description": "Local-first secret vault SDK — PBKDF2 + AES-256-GCM vault lifecycle, session cache with TTL, IndexedDB storage plugin, and optional React bindings",
   "type": "module",
   "files": [
     "dist"

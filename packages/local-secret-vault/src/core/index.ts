@@ -1,7 +1,7 @@
 /**
  * Encrypted vault core — framework-agnostic entry point.
  *
- * Import from `@activarium/encrypted-vault/core` for pure JS/TS usage
+ * Import from `@activarium/local-secret-vault/core` for pure JS/TS usage
  * without React dependencies.
  */
 

@@ -1,8 +1,8 @@
-# Encrypted Vault Core
+# Local Secret Vault Core
 
 ## Purpose
 
-Provides the framework-agnostic core of the `@activarium/encrypted-vault` SDK: cryptographic primitives (PBKDF2 + AES-256-GCM), session cache with configurable TTL, storage abstraction interface, and vault lifecycle orchestration — all with zero UI framework dependencies.
+Provides the framework-agnostic core of the `@activarium/local-secret-vault` SDK: cryptographic primitives (PBKDF2 + AES-256-GCM), session cache with configurable TTL, storage abstraction interface, and vault lifecycle orchestration — all with zero UI framework dependencies.
 
 ## Requirements
 

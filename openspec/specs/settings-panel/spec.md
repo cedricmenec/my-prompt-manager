@@ -11,7 +11,7 @@ The system SHALL provide a `SettingsPanel` React component that:
 - Renders as a modal overlay (fixed, full-screen backdrop)
 - Contains a "Data" section with an "Export JSON" button and an "Import JSON" button
 - Contains an active "Google Drive" or "Sync" section for Google Drive integration configuration, connection status, connect/disconnect actions, folder configuration, and folder access testing
-- Contains placeholder sections for future features that are not implemented by this change, including "API Keys" and any unsupported auto-backup or encrypted-vault features, visually present but non-interactive and labelled "coming soon" when shown
+- Contains placeholder sections for future features that are not implemented by this change, including "API Keys" and any unsupported auto-backup or local-secret-vault features, visually present but non-interactive and labelled "coming soon" when shown
 - Closes when the user presses Escape or clicks the backdrop
 
 #### Scenario: Settings panel opens from sidebar

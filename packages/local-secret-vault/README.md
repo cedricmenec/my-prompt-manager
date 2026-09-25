@@ -1,4 +1,4 @@
-# @activarium/encrypted-vault
+# @activarium/local-secret-vault
 
 Local-first encrypted vault SDK for browser-based applications. Provides PBKDF2 + AES-256-GCM vault lifecycle, session cache with configurable TTL, IndexedDB storage plugin, and optional React bindings.
 
@@ -14,7 +14,7 @@ Local-first encrypted vault SDK for browser-based applications. Provides PBKDF2 
 ## Installation
 
 ```bash
-pnpm add @activarium/encrypted-vault
+pnpm add @activarium/local-secret-vault
 ```
 
 ## Usage
@@ -22,9 +22,9 @@ pnpm add @activarium/encrypted-vault
 ### Core (framework-agnostic)
 
 ```ts
-import { createVault } from '@activarium/encrypted-vault/core'
-import { createIndexedDbStorage } from '@activarium/encrypted-vault/storage/indexeddb'
-import type { VaultPayloadBase } from '@activarium/encrypted-vault/core'
+import { createVault } from '@activarium/local-secret-vault/core'
+import { createIndexedDbStorage } from '@activarium/local-secret-vault/storage/indexeddb'
+import type { VaultPayloadBase } from '@activarium/local-secret-vault/core'
 
 interface MyPayload extends VaultPayloadBase {
   version: 1
@@ -67,8 +67,8 @@ await vault.changePassphrase('old-passphrase', 'new-passphrase')
 ### In-memory storage (for testing)
 
 ```ts
-import { createVault } from '@activarium/encrypted-vault/core'
-import { createMemoryStorage } from '@activarium/encrypted-vault/storage/memory'
+import { createVault } from '@activarium/local-secret-vault/core'
+import { createMemoryStorage } from '@activarium/local-secret-vault/storage/memory'
 
 const vault = createVault({
   storage: createMemoryStorage(),
@@ -79,7 +79,7 @@ const vault = createVault({
 ### React bindings
 
 ```tsx
-import { VaultGate, VaultSettings } from '@activarium/encrypted-vault/react'
+import { VaultGate, VaultSettings } from '@activarium/local-secret-vault/react'
 
 function App() {
   return (
@@ -97,11 +97,11 @@ function App() {
 
 | Import path | Contents |
 |-------------|----------|
-| `@activarium/encrypted-vault/core` | Core: `Vault`, `createVault`, types, errors, crypto, session |
-| `@activarium/encrypted-vault/storage/indexeddb` | IndexedDB storage plugin |
-| `@activarium/encrypted-vault/storage/memory` | In-memory storage plugin (for testing) |
-| `@activarium/encrypted-vault/react` | React hooks and components |
-| `@activarium/encrypted-vault` | Re-exports everything |
+| `@activarium/local-secret-vault/core` | Core: `Vault`, `createVault`, types, errors, crypto, session |
+| `@activarium/local-secret-vault/storage/indexeddb` | IndexedDB storage plugin |
+| `@activarium/local-secret-vault/storage/memory` | In-memory storage plugin (for testing) |
+| `@activarium/local-secret-vault/react` | React hooks and components |
+| `@activarium/local-secret-vault` | Re-exports everything |
 
 ## API
 
