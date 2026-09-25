@@ -6,7 +6,7 @@ Provides a local encrypted vault for persisting sensitive user data (API keys, f
 
 *This spec is maintained as an app-level adapter. The core vault logic is now provided by the `@activarium/encrypted-vault` SDK package.*
 
-## Requirements
+## MODIFIED Requirements
 
 ### Requirement: IndexedDB encrypted vault store
 The system SHALL create the `encryptedVault` IndexedDB object store within the `byo-prompt-manager` database. The store is now managed by the `@activarium/encrypted-vault` SDK's IndexedDB storage plugin, not by the app's database upgrade logic.

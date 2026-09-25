@@ -4,7 +4,7 @@
 
 Provides the framework-agnostic core of the `@activarium/encrypted-vault` SDK: cryptographic primitives (PBKDF2 + AES-256-GCM), session cache with configurable TTL, storage abstraction interface, and vault lifecycle orchestration — all with zero UI framework dependencies.
 
-## Requirements
+## MODIFIED Requirements
 
 ### Requirement: Vault class with generic payload type
 The SDK SHALL export a `Vault<TPayload>` class parameterized with the payload type. The payload type SHALL extend `VaultPayloadBase` which requires a `version: number` field. The class SHALL encapsulate all vault state (derived `CryptoKey`, decrypted payload) as instance members, not module-level state.

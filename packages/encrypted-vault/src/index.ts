@@ -1,5 +1,5 @@
 /**
- * @byo-prompt/encrypted-vault — core entry point.
+ * @activarium/encrypted-vault — core entry point.
  *
  * Re-exports all core functionality: types, errors, crypto, session,
  * storage interface, and the Vault class + factory.

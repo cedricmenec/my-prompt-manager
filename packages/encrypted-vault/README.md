@@ -1,4 +1,4 @@
-# @byo-prompt/encrypted-vault
+# @activarium/encrypted-vault
 
 Local-first encrypted vault SDK for browser-based applications. Provides PBKDF2 + AES-256-GCM vault lifecycle, session cache with configurable TTL, IndexedDB storage plugin, and optional React bindings.
 
@@ -14,7 +14,7 @@ Local-first encrypted vault SDK for browser-based applications. Provides PBKDF2 
 ## Installation
 
 ```bash
-pnpm add @byo-prompt/encrypted-vault
+pnpm add @activarium/encrypted-vault
 ```
 
 ## Usage
@@ -22,9 +22,9 @@ pnpm add @byo-prompt/encrypted-vault
 ### Core (framework-agnostic)
 
 ```ts
-import { createVault } from '@byo-prompt/encrypted-vault/core'
-import { createIndexedDbStorage } from '@byo-prompt/encrypted-vault/storage/indexeddb'
-import type { VaultPayloadBase } from '@byo-prompt/encrypted-vault/core'
+import { createVault } from '@activarium/encrypted-vault/core'
+import { createIndexedDbStorage } from '@activarium/encrypted-vault/storage/indexeddb'
+import type { VaultPayloadBase } from '@activarium/encrypted-vault/core'
 
 interface MyPayload extends VaultPayloadBase {
   version: 1
@@ -67,8 +67,8 @@ await vault.changePassphrase('old-passphrase', 'new-passphrase')
 ### In-memory storage (for testing)
 
 ```ts
-import { createVault } from '@byo-prompt/encrypted-vault/core'
-import { createMemoryStorage } from '@byo-prompt/encrypted-vault/storage/memory'
+import { createVault } from '@activarium/encrypted-vault/core'
+import { createMemoryStorage } from '@activarium/encrypted-vault/storage/memory'
 
 const vault = createVault({
   storage: createMemoryStorage(),
@@ -79,7 +79,7 @@ const vault = createVault({
 ### React bindings
 
 ```tsx
-import { VaultGate, VaultSettings } from '@byo-prompt/encrypted-vault/react'
+import { VaultGate, VaultSettings } from '@activarium/encrypted-vault/react'
 
 function App() {
   return (
@@ -97,11 +97,11 @@ function App() {
 
 | Import path | Contents |
 |-------------|----------|
-| `@byo-prompt/encrypted-vault/core` | Core: `Vault`, `createVault`, types, errors, crypto, session |
-| `@byo-prompt/encrypted-vault/storage/indexeddb` | IndexedDB storage plugin |
-| `@byo-prompt/encrypted-vault/storage/memory` | In-memory storage plugin (for testing) |
-| `@byo-prompt/encrypted-vault/react` | React hooks and components |
-| `@byo-prompt/encrypted-vault` | Re-exports everything |
+| `@activarium/encrypted-vault/core` | Core: `Vault`, `createVault`, types, errors, crypto, session |
+| `@activarium/encrypted-vault/storage/indexeddb` | IndexedDB storage plugin |
+| `@activarium/encrypted-vault/storage/memory` | In-memory storage plugin (for testing) |
+| `@activarium/encrypted-vault/react` | React hooks and components |
+| `@activarium/encrypted-vault` | Re-exports everything |
 
 ## API
 

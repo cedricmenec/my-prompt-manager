@@ -31,7 +31,7 @@ Non-goals for MVP:
 | Fuzzy search | Fuse.js |
 | Markdown / YAML | `js-yaml` + custom frontmatter parser |
 | Schema validation | Zod |
-| Encryption | Web Crypto API (AES-GCM, PBKDF2) — via `@byo-prompt/encrypted-vault` SDK package |
+| Encryption | Web Crypto API (AES-GCM, PBKDF2) — via `@activarium/encrypted-vault` SDK package |
 | Encrypted vault SDK | `packages/encrypted-vault/` — core crypto, IndexedDB storage, React bindings |
 | Google Drive sync | Google Drive REST API v3 + OAuth 2.0 (PKCE) |
 | AI providers | OpenAI API, OpenRouter API, custom OpenAI-compatible endpoints |
@@ -82,7 +82,7 @@ src/
 ├── assets/                 — Icons, SVG, static images
 ├── styles/                 — Tailwind base and global CSS entry point
 packages/
-├── encrypted-vault/        — @byo-prompt/encrypted-vault SDK (crypto, IndexedDB, React)
+├── encrypted-vault/        — @activarium/encrypted-vault SDK (crypto, IndexedDB, React)
 ```
 
 ---

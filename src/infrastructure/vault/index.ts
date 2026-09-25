@@ -8,10 +8,10 @@
  * and store `encryptedVault` (separate from the app's main database).
  */
 
-import { createVault as createSdkVault } from '@byo-prompt/encrypted-vault/core'
-import { createIndexedDbStorage } from '@byo-prompt/encrypted-vault/storage/indexeddb'
+import { createVault as createSdkVault } from '@activarium/encrypted-vault/core'
+import { createIndexedDbStorage } from '@activarium/encrypted-vault/storage/indexeddb'
 import type { VaultPayload } from './payload'
-import type { ExportableVault } from '@byo-prompt/encrypted-vault/core'
+import type { ExportableVault } from '@activarium/encrypted-vault/core'
 
 export type { VaultPayload } from './payload'
 
@@ -93,7 +93,7 @@ export function tryAutoUnlock(): Promise<boolean> {
 // SDK re-exports for consumers that use SDK modules directly
 // ---------------------------------------------------------------------------
 
-export { isWebCryptoAvailable } from '@byo-prompt/encrypted-vault/core'
-export { getTTLConfig, setTTLConfig } from '@byo-prompt/encrypted-vault/core'
-export type { TTLMinutes } from '@byo-prompt/encrypted-vault/core'
-export type { ExportableVault } from '@byo-prompt/encrypted-vault/core'
+export { isWebCryptoAvailable } from '@activarium/encrypted-vault/core'
+export { getTTLConfig, setTTLConfig } from '@activarium/encrypted-vault/core'
+export type { TTLMinutes } from '@activarium/encrypted-vault/core'
+export type { ExportableVault } from '@activarium/encrypted-vault/core'

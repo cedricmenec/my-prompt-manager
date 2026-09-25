@@ -5,7 +5,7 @@
  * the concrete payload used by the prompt manager application.
  */
 
-import type { VaultPayloadBase } from '@byo-prompt/encrypted-vault/core'
+import type { VaultPayloadBase } from '@activarium/encrypted-vault/core'
 
 export interface VaultPayload extends VaultPayloadBase {
   version: 1

@@ -8,7 +8,7 @@ importers:
 
   .:
     dependencies:
-      '@byo-prompt/encrypted-vault':
+      '@activarium/encrypted-vault':
         specifier: workspace:*
         version: link:packages/encrypted-vault
       '@tiptap/extension-placeholder':

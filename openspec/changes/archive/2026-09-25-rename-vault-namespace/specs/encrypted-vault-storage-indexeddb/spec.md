@@ -4,7 +4,7 @@
 
 Provides a built-in `VaultStorage` implementation for the `@activarium/encrypted-vault` SDK using the `idb` library and the browser's IndexedDB API. The storage plugin manages its own database connection and object store, independent of the host application's database schema.
 
-## Requirements
+## MODIFIED Requirements
 
 ### Requirement: IndexedDB storage factory
 The SDK SHALL export `createIndexedDbStorage(options: IndexedDbStorageOptions): VaultStorage` where `IndexedDbStorageOptions` includes `dbName: string` (database name), `storeName: string` (object store name), and optional `storeKey: string` (record key, default `'vault'`).

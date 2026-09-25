@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "pnpm build:vault && tsc -b && vite build",
-    "build:vault": "pnpm --filter @byo-prompt/encrypted-vault build",
+    "build:vault": "pnpm --filter @activarium/encrypted-vault build",
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "vitest run",
@@ -14,7 +14,7 @@
     "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
-    "@byo-prompt/encrypted-vault": "workspace:*",
+    "@activarium/encrypted-vault": "workspace:*",
     "@tiptap/extension-placeholder": "^3.26.0",
     "@tiptap/react": "^3.26.0",
     "@tiptap/starter-kit": "^3.26.0",

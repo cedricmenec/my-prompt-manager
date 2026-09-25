@@ -122,5 +122,5 @@ The project is not yet mature enough to support external contributions effective
 
 - Read the [project architecture and conventions](openspec/project.md).
 - Browse the [current behavior specifications](openspec/specs/).
-- See the [`@byo-prompt/encrypted-vault` package guide](packages/encrypted-vault/README.md).
+- See the [`@activarium/encrypted-vault` package guide](packages/encrypted-vault/README.md).
 - Review [features that are still deferred](deferred-features.md).

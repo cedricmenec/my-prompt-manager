@@ -159,7 +159,7 @@ export function initDb(): Promise<IDBPDatabase<PromptDB>> {
         }
 
         // v10→v11: Remove encryptedVault store — responsibility moved to the
-        // @byo-prompt/encrypted-vault SDK which manages its own database.
+        // @activarium/encrypted-vault SDK which manages its own database.
         if (db.objectStoreNames.contains('encryptedVault')) {
           console.log('[DB] v11: Removing "encryptedVault" store (moved to SDK)')
           db.deleteObjectStore('encryptedVault')

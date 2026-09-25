@@ -4,7 +4,7 @@
 
 Provides optional React hooks and generic UI components for the `@activarium/encrypted-vault` SDK. Includes `useVault()` hook for state management, `VaultGate` for guarding application rendering, and modal components for vault creation, unlock, and settings.
 
-## Requirements
+## MODIFIED Requirements
 
 ### Requirement: useVault hook
 The React bindings SHALL export a `useVault<TPayload>(vault: Vault<TPayload>)` hook that tracks vault state (`loading | no-vault | locked | unlocked | unavailable`) and exposes convenience methods (`create`, `unlock`, `lock`, `skip`).

@@ -1,7 +1,7 @@
 /**
  * React bindings for the encrypted vault SDK.
  *
- * Import from `@byo-prompt/encrypted-vault/react`.
+ * Import from `@activarium/encrypted-vault/react`.
  */
 
 export { useVault } from './useVault'
