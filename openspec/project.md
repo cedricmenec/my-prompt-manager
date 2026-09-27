@@ -31,8 +31,7 @@ Non-goals for MVP:
 | Fuzzy search | Fuse.js |
 | Markdown / YAML | `js-yaml` + custom frontmatter parser |
 | Schema validation | Zod |
-| Encryption | Web Crypto API (AES-GCM, PBKDF2) — via `@activarium/local-secret-vault` SDK package |
-| Local secret vault SDK | `packages/local-secret-vault/` — core crypto, IndexedDB storage, React bindings |
+| Encryption | Web Crypto API (AES-GCM, PBKDF2) — via `@activarium/local-secret-vault` SDK package (external repo, consumed as npm dependency) |
 | Google Drive sync | Google Drive REST API v3 + OAuth 2.0 (PKCE) |
 | AI providers | OpenAI API, OpenRouter API, custom OpenAI-compatible endpoints |
 | Testing | Vitest |
@@ -81,8 +80,6 @@ src/
 ├── infrastructure/         — Browser API adapters (IndexedDB, clipboard, crypto, Drive client)
 ├── assets/                 — Icons, SVG, static images
 ├── styles/                 — Tailwind base and global CSS entry point
-packages/
-├── local-secret-vault/    — @activarium/local-secret-vault SDK (crypto, IndexedDB, React)
 ```
 
 ---
@@ -124,7 +121,7 @@ Services:
 - `promptRepository` — CRUD over IndexedDB (`idb`). Schema versioned, migrations handled.
 - `settingsRepository` — small preferences in `localStorage` (theme, last-used view mode, last-used filters).
 - `clipboardAdapter` — wraps `navigator.clipboard.writeText`.
-- `cryptoVault` — Web Crypto-based encrypt/decrypt (AES-GCM, key derived via PBKDF2 from a user passphrase). Used for Drive snapshot encryption and optional API key persistence.
+- `vaultAdapter` — thin adapter over the `@activarium/local-secret-vault` SDK (`src/infrastructure/vault/`): preconfigured `Vault` instance, backward-compatible function exports, app `VaultPayload` type. Used for API key persistence and Drive snapshot key derivation.
 - `driveClient` — Google Drive REST API v3 client. Handles OAuth token lifecycle (PKCE flow), file read/write, metadata.
 - `aiProviderClient` — unified OpenAI-compatible API client. Supports OpenAI, OpenRouter, and any custom base URL.
 
@@ -321,7 +318,7 @@ Focus on domain services and infrastructure adapters:
 - `MarkdownParser`: valid frontmatter, missing fields, invalid YAML, body extraction, roundtrip with `MarkdownSerializer`.
 - `ValidationService`: complete prompt, missing optional fields, missing title.
 - `SearchService`: fuzzy matching, filter combinations, empty query, no results.
-- `cryptoVault`: encrypt/decrypt roundtrip, wrong passphrase handling.
+- `vaultAdapter` / `sessionCredentials`: vault-backed API key persistence, wrong passphrase handling.
 - `aiProviderClient`: request shape, error mapping (401, 429, 402, network error).
 
 Test location: colocated with implementation (`*.test.ts`).

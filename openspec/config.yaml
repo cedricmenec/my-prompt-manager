@@ -18,10 +18,3 @@ schema: spec-driven
 #       - Always include a "Non-goals" section
 #     tasks:
 #       - Break tasks into chunks of max 2 hours
-
-# Specs managed by this project
-specs:
-  - local-secret-vault
-  - local-secret-vault-core
-  - local-secret-vault-react
-  - local-secret-vault-storage-indexeddb
